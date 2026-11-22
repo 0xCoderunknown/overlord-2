@@ -21,7 +21,7 @@ class PixelHud extends StatelessWidget {
     final hpRatio = (player.currentHp / player.maxHp).clamp(0.0, 1.0);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: const BoxDecoration(
         color: PixelTheme.roomVoid,
         border: Border(
@@ -34,26 +34,45 @@ class PixelHud extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'SCOUT: ${player.name.toUpperCase()}',
-                style: PixelTheme.pixelStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: PixelTheme.neonGreen,
-                ),
+              Row(
+                children: [
+                  Text(
+                    'SCOUT: ${player.name.toUpperCase()}',
+                    style: PixelTheme.pixelStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: PixelTheme.neonGreen,
+                    ),
+                  ),
+                  if (player.psychoActive) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      color: PixelTheme.alertRed,
+                      child: Text(
+                        'PSYCHO',
+                        style: PixelTheme.pixelStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                          color: PixelTheme.roomVoid,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
               Text(
                 'L${floorIndex + 1} : R${roomIndex + 1}',
                 style: PixelTheme.pixelStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   color: PixelTheme.elevatorCyan,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          // HP Bar & Stats
+          const SizedBox(height: 6),
+          // Vitality Bar & Wealth
           Row(
             children: [
               Expanded(
@@ -66,22 +85,22 @@ class PixelHud extends StatelessWidget {
                         Text(
                           'VITALITY',
                           style: PixelTheme.pixelStyle(
-                            fontSize: 10,
+                            fontSize: 9,
                             color: PixelTheme.textMuted,
                           ),
                         ),
                         Text(
                           '${player.currentHp} / ${player.maxHp} HP',
                           style: PixelTheme.pixelStyle(
-                            fontSize: 10,
+                            fontSize: 9,
                             color: hpRatio < 0.3 ? PixelTheme.alertRed : PixelTheme.textLight,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Container(
-                      height: 8,
+                      height: 6,
                       decoration: BoxDecoration(
                         color: PixelTheme.roomUnrevealed,
                         border: Border.all(color: PixelTheme.borderPixel),
@@ -99,41 +118,64 @@ class PixelHud extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
-              // Caps & Medkits
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'CAPS: ${player.caps}',
-                    style: PixelTheme.pixelStyle(
-                      fontSize: 11,
-                      color: PixelTheme.chestGold,
-                      fontWeight: FontWeight.bold,
-                    ),
+              const SizedBox(width: 14),
+              Text(
+                'GOLD: ${player.gold}',
+                style: PixelTheme.pixelStyle(
+                  fontSize: 11,
+                  color: PixelTheme.chestGold,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'MEDS: ${player.medkits}',
+                style: PixelTheme.pixelStyle(
+                  fontSize: 11,
+                  color: PixelTheme.elevatorCyan,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Equipped gear tags
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  color: PixelTheme.roomUnrevealed,
+                  child: Text(
+                    'WPN: ${player.equippedWeapon.name.toUpperCase()} (${player.equippedWeapon.minStat}-${player.equippedWeapon.maxStat})',
+                    style: PixelTheme.pixelStyle(fontSize: 8, color: PixelTheme.textLight),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'MEDKITS: ${player.medkits}',
-                    style: PixelTheme.pixelStyle(
-                      fontSize: 11,
-                      color: PixelTheme.elevatorCyan,
-                      fontWeight: FontWeight.bold,
-                    ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  color: PixelTheme.roomUnrevealed,
+                  child: Text(
+                    'ARM: ${player.equippedArmor.name.toUpperCase()} (${player.equippedArmor.minStat}-${player.equippedArmor.maxStat} DR)',
+                    style: PixelTheme.pixelStyle(fontSize: 8, color: PixelTheme.textLight),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
+                ),
               ),
             ],
           ),
           if (eventLog != null && eventLog!.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               color: PixelTheme.roomUnrevealed,
               child: Text(
                 '> $eventLog',
                 style: PixelTheme.pixelStyle(
-                  fontSize: 10,
+                  fontSize: 9,
                   color: PixelTheme.textLight,
                 ),
                 maxLines: 2,
@@ -146,4 +188,3 @@ class PixelHud extends StatelessWidget {
     );
   }
 }
-

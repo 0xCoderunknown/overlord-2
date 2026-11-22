@@ -56,13 +56,28 @@
 
 ---
 
-## 🗺️ 4. Roadmap & Milestone Horizons
+## 💰 5. The Paid Requisition & Risk/Reward Economy
+
+- **Permanent Unlocks $\neq$ Free Gear**:
+  - Unlocking a weapon (via kill mastery, milestones, or blueprints) registers it in the Vault Armory.
+  - Bringing an unlocked weapon as your starting loadout costs an upfront **Deployment Fee (Requisition Cost)** in Vault Gold.
+- **Economic Tension & Profit Margins**:
+  - **Starter Gear (Pipe Pistol):** Cost 0 Gold. High risk, 100% profit margin.
+  - **Mid-Tier (Combat Shotgun):** Cost ~300 Gold. Balances risk on Medium contracts.
+  - **Heavy / Legendary (RPG / Plasma Cannon):** Cost 2,000 Gold. Overkill on Easy/Medium missions causes a net financial loss even with a victory. On Hard/Nightmare missions (3,000+ Gold payout), it ensures survival but risks a devastating financial crash if you wipe!
+- **Mission Contracts (Choose 1 of 3)**:
+  - Each contract displays: Target Objective, Difficulty Tier, Base Gold Payout, and Enemy Threat Rating.
+
+---
+
+## 🗺️ 6. Roadmap & Milestone Horizons
 
 - [x] Flutter project initialization (Android + Web)
-- [x] Git sync with `0xCoderunknown/overlord-2.git`
-- [ ] Core Room & Building Data Structures (Grid, Room Types, Traversal Graph)
-- [ ] 2D Cross-Section Building Renderer (Fog of war, room outlines, team marker)
-- [ ] Tap-to-Move squad navigation engine
-- [ ] Room Encounter System (Loot, Combat, Traps)
-- [ ] Vertical floor transit (Stairs / Elevators)
+- [x] Core Room & Building Data Structures (Grid, Room Types, Traversal Graph)
+- [x] 2D Cross-Section Building Renderer (Fog of war, room outlines, team marker)
+- [x] Tap-to-Move squad navigation engine
+- [x] Modular 1v1 combat foundation
+- [ ] Scrap Piles upon enemy defeat & Key Economy (T1-T3 Safes)
+- [ ] In-run weapon upgrade kits & forward-only room locks
+- [ ] Contract Selection Board (1 of 3 missions) & Paid Loadout Requisition
 

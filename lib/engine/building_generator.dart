@@ -7,11 +7,11 @@ class BuildingGenerator {
   BuildingGenerator({Random? random}) : rng = random ?? Random();
 
   Building generateBuilding({
-    String id = 'bld_overlord_01',
-    String name = 'Ruined Vault Facility 42',
+    String id = 'bld_sector_01',
+    String name = 'Vault Sector Facility 42',
     int floorCount = 3,
     int roomsPerFloor = 4,
-    int elevatorColumn = 3, // Placed on the far right by default
+    int elevatorColumn = 3,
   }) {
     final floors = <Floor>[];
 
@@ -26,7 +26,7 @@ class BuildingGenerator {
     for (int f = 0; f < floorCount; f++) {
       final rooms = <Room>[];
       for (int r = 0; r < roomsPerFloor; r++) {
-        // Check if elevator
+        // Elevator Shaft
         if (r == elevatorColumn) {
           rooms.add(Room(
             floorIndex: f,
@@ -38,7 +38,7 @@ class BuildingGenerator {
           continue;
         }
 
-        // Entrance room: Ground floor, room 0
+        // Entrance Room: Floor 0, Room 0
         if (f == 0 && r == 0) {
           rooms.add(Room(
             floorIndex: f,
@@ -50,22 +50,18 @@ class BuildingGenerator {
           continue;
         }
 
-        // Random room type from pool
         final type = roomPool[rng.nextInt(roomPool.length)];
-
-        // Decide content:
-        // ~45% enemy, ~25% loot chest, ~30% empty
         final roll = rng.nextInt(100);
         ContentType contentType;
         Enemy? enemy;
-        LootItem? loot;
+        ScrapPile? scrapPile;
 
         if (roll < 45) {
           contentType = ContentType.enemy;
           enemy = _generateEnemy(f);
         } else if (roll < 70) {
-          contentType = ContentType.loot;
-          loot = _generateLoot(f);
+          contentType = ContentType.scrap;
+          scrapPile = generateScrapPile(f);
         } else {
           contentType = ContentType.empty;
         }
@@ -77,13 +73,13 @@ class BuildingGenerator {
           contentType: contentType,
           state: RoomState.unrevealed,
           enemy: enemy,
-          loot: loot,
+          scrapPile: scrapPile,
         ));
       }
       floors.add(Floor(floorIndex: f, rooms: rooms));
     }
 
-    // Initial fog-of-war reveal: Entrance room is active, adjacent room is outline
+    // Reveal entrance neighbor
     if (floors.isNotEmpty && floors[0].rooms.length > 1) {
       floors[0].rooms[1].state = RoomState.outline;
     }
@@ -98,67 +94,139 @@ class BuildingGenerator {
   Enemy _generateEnemy(int floorIndex) {
     final enemies = [
       Enemy(
-        name: 'Mutated Vermin',
-        maxHp: 20 + (floorIndex * 10),
+        name: 'Irradiated Scav-Rat',
+        maxHp: 18 + (floorIndex * 8),
         minDamage: 4 + (floorIndex * 2),
-        maxDamage: 8 + (floorIndex * 3),
-        lootDrop: rng.nextBool()
-            ? LootItem(
-                id: 'loot_caps_${rng.nextInt(9999)}',
-                name: 'Scavenged Caps',
-                caps: 5 + rng.nextInt(15),
-              )
-            : null,
+        maxDamage: 7 + (floorIndex * 2),
+        bountyGold: 8 + rng.nextInt(6),
       ),
       Enemy(
-        name: 'Rogue Security Bot',
-        maxHp: 35 + (floorIndex * 15),
+        name: 'Rogue Sentry Drone',
+        maxHp: 30 + (floorIndex * 12),
         minDamage: 6 + (floorIndex * 3),
-        maxDamage: 12 + (floorIndex * 4),
-        lootDrop: rng.nextBool()
-            ? LootItem(
-                id: 'loot_medkit_${rng.nextInt(9999)}',
-                name: 'Medical Syringe',
-                healAmount: 40,
-              )
-            : null,
+        maxDamage: 11 + (floorIndex * 3),
+        bountyGold: 15 + rng.nextInt(10),
       ),
       Enemy(
-        name: 'Raider Scavenger',
-        maxHp: 28 + (floorIndex * 12),
+        name: 'Raider Marauder',
+        maxHp: 26 + (floorIndex * 10),
         minDamage: 5 + (floorIndex * 2),
         maxDamage: 10 + (floorIndex * 3),
-        lootDrop: LootItem(
-          id: 'loot_pouch_${rng.nextInt(9999)}',
-          name: 'Raider Pouch',
-          caps: 10 + rng.nextInt(20),
-        ),
+        bountyGold: 12 + rng.nextInt(8),
       ),
     ];
 
     return enemies[rng.nextInt(enemies.length)];
   }
 
-  LootItem _generateLoot(int floorIndex) {
-    final loots = [
-      LootItem(
-        id: 'chest_caps_${rng.nextInt(9999)}',
-        name: 'Cache of Caps',
-        caps: 15 + rng.nextInt(35),
-      ),
-      LootItem(
-        id: 'chest_medkit_${rng.nextInt(9999)}',
-        name: 'Field Medkit',
-        healAmount: 50,
-      ),
-      LootItem(
-        id: 'chest_salvage_${rng.nextInt(9999)}',
-        name: 'High-Tech Salvage',
-        caps: 40 + rng.nextInt(40),
-      ),
-    ];
+  ScrapPile generateScrapPile(int floorIndex) {
+    // 25% chance to find an item in the scrap pile
+    final hasLoot = rng.nextInt(100) < 25;
+    EquipmentItem? item;
 
-    return loots[rng.nextInt(loots.length)];
+    if (hasLoot) {
+      item = _rollScrapItem(floorIndex);
+    }
+
+    return ScrapPile(
+      id: 'scrap_${rng.nextInt(999999)}',
+      containedItem: item,
+    );
+  }
+
+  EquipmentItem _rollScrapItem(int floorIndex) {
+    final roll = rng.nextInt(100);
+
+    // 40% Weapon, 30% Armor, 30% Consumable
+    if (roll < 40) {
+      final weapons = [
+        EquipmentItem(
+          id: 'wpn_nailgun_${rng.nextInt(999)}',
+          name: 'Modified Nailgun',
+          type: ItemType.weapon,
+          minStat: 8 + floorIndex * 2,
+          maxStat: 14 + floorIndex * 3,
+          scrapValue: 3,
+          description: 'Pneumatic piston shoots sharpened iron nails.',
+        ),
+        EquipmentItem(
+          id: 'wpn_shotgun_${rng.nextInt(999)}',
+          name: 'Sawed-Off Shotgun',
+          type: ItemType.weapon,
+          minStat: 12 + floorIndex * 3,
+          maxStat: 18 + floorIndex * 4,
+          scrapValue: 5,
+          description: 'Devastating close-range scatter blast.',
+        ),
+        EquipmentItem(
+          id: 'wpn_rebar_${rng.nextInt(999)}',
+          name: 'Welded Rebar Club',
+          type: ItemType.weapon,
+          minStat: 9 + floorIndex * 2,
+          maxStat: 15 + floorIndex * 3,
+          scrapValue: 3,
+          description: 'Concrete block affixed to rusted rebar.',
+        ),
+      ];
+      return weapons[rng.nextInt(weapons.length)];
+    } else if (roll < 70) {
+      final armors = [
+        EquipmentItem(
+          id: 'arm_leather_${rng.nextInt(999)}',
+          name: 'Boiled Leather Vest',
+          type: ItemType.armor,
+          minStat: 3 + floorIndex,
+          maxStat: 6 + floorIndex,
+          scrapValue: 3,
+          description: 'Toughened leather stops claws and small blades.',
+        ),
+        EquipmentItem(
+          id: 'arm_scrap_${rng.nextInt(999)}',
+          name: 'Welded Scrap Plate',
+          type: ItemType.armor,
+          minStat: 5 + floorIndex * 2,
+          maxStat: 9 + floorIndex * 2,
+          scrapValue: 5,
+          description: 'Heavy road signs riveted to a chest plate.',
+        ),
+      ];
+      return armors[rng.nextInt(armors.length)];
+    } else {
+      final consumables = [
+        const EquipmentItem(
+          id: 'c_medkit',
+          name: 'Military Medkit',
+          type: ItemType.consumable,
+          consumableEffect: ConsumableEffect.heal,
+          scrapValue: 2,
+          description: 'Sterile bandage and coagulant stimulant (+50 HP).',
+        ),
+        const EquipmentItem(
+          id: 'c_psycho',
+          name: 'Combat Psycho Chem',
+          type: ItemType.consumable,
+          consumableEffect: ConsumableEffect.psycho,
+          scrapValue: 3,
+          description: 'Violent adrenaline surge (+6 DMG for combat).',
+        ),
+        const EquipmentItem(
+          id: 'c_stealthboy',
+          name: 'Stealthboy Cloak Unit',
+          type: ItemType.consumable,
+          consumableEffect: ConsumableEffect.stealth,
+          scrapValue: 4,
+          description: 'Reflective optical unit allowing silent bypass.',
+        ),
+        const EquipmentItem(
+          id: 'c_key',
+          name: 'Security Master Key',
+          type: ItemType.consumable,
+          consumableEffect: ConsumableEffect.key,
+          scrapValue: 2,
+          description: 'Heavy brass key opens reinforced bunker safes.',
+        ),
+      ];
+      return consumables[rng.nextInt(consumables.length)];
+    }
   }
 }
-

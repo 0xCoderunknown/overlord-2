@@ -11,30 +11,74 @@ enum RoomType {
 }
 
 enum RoomState {
-  unrevealed,     // Blacked out (fog of war)
-  outline,        // Discovered, adjacent to cleared room, tap to move
-  active,         // Squad/Scout is inside
-  cleared,        // Explored and resolved
+  unrevealed,
+  outline,
+  active,
+  cleared,
 }
 
 enum ContentType {
   empty,
   loot,
+  scrap,
   enemy,
   elevator,
 }
 
-class LootItem {
+enum ItemType {
+  weapon,
+  armor,
+  consumable,
+}
+
+enum ConsumableEffect {
+  heal,
+  psycho,
+  stealth,
+  key,
+}
+
+class EquipmentItem {
   final String id;
   final String name;
-  final int caps;
-  final int healAmount;
+  final ItemType type;
+  final int minStat;
+  final int maxStat;
+  final int scrapValue;
+  final ConsumableEffect? consumableEffect;
+  final String description;
 
-  const LootItem({
+  const EquipmentItem({
     required this.id,
     required this.name,
-    this.caps = 0,
-    this.healAmount = 0,
+    required this.type,
+    this.minStat = 0,
+    this.maxStat = 0,
+    this.scrapValue = 3,
+    this.consumableEffect,
+    this.description = '',
+  });
+
+  bool get isWeapon => type == ItemType.weapon;
+  bool get isArmor => type == ItemType.armor;
+  bool get isConsumable => type == ItemType.consumable;
+
+  String get statDescription {
+    if (isWeapon) return 'DMG: $minStat - $maxStat';
+    if (isArmor) return 'DR: $minStat - $maxStat';
+    return description;
+  }
+}
+
+class ScrapPile {
+  final String id;
+  bool isSearched;
+  final EquipmentItem? containedItem;
+
+  ScrapPile({
+    required this.id,
+    this.isSearched = false,
+    this.containedItem,
   });
 }
 
@@ -44,14 +88,14 @@ class Enemy {
   int currentHp;
   final int minDamage;
   final int maxDamage;
-  final LootItem? lootDrop;
+  final int bountyGold;
 
   Enemy({
     required this.name,
     required this.maxHp,
     required this.minDamage,
     required this.maxDamage,
-    this.lootDrop,
+    this.bountyGold = 12,
   }) : currentHp = maxHp;
 
   bool get isDead => currentHp <= 0;
@@ -65,24 +109,61 @@ class ScoutCharacter {
   final String name;
   final int maxHp;
   int currentHp;
-  final int minDamage;
-  final int maxDamage;
-  int caps;
+  int gold;
   int medkits;
+  int keys;
+  int stealthboys;
+  bool psychoActive;
+
+  EquipmentItem equippedWeapon;
+  EquipmentItem equippedArmor;
 
   ScoutCharacter({
     required this.name,
     this.maxHp = 100,
-    this.minDamage = 8,
-    this.maxDamage = 16,
-    this.caps = 0,
+    this.gold = 0,
     this.medkits = 1,
-  }) : currentHp = maxHp;
+    this.keys = 1,
+    this.stealthboys = 0,
+    this.psychoActive = false,
+    EquipmentItem? starterWeapon,
+    EquipmentItem? starterArmor,
+  })  : currentHp = maxHp,
+        equippedWeapon = starterWeapon ??
+            const EquipmentItem(
+              id: 'wpn_pipe_pistol',
+              name: 'Crude Pipe Pistol',
+              type: ItemType.weapon,
+              minStat: 6,
+              maxStat: 12,
+              scrapValue: 2,
+              description: 'Rusted chamber. Shoots scrap rivets.',
+            ),
+        equippedArmor = starterArmor ??
+            const EquipmentItem(
+              id: 'arm_phonebook',
+              name: 'Taped Phonebook',
+              type: ItemType.armor,
+              minStat: 2,
+              maxStat: 4,
+              scrapValue: 2,
+              description: 'Layers of yellow pages bound by duct tape.',
+            );
 
   bool get isDead => currentHp <= 0;
 
   int rollDamage(Random rng) {
-    return minDamage + rng.nextInt(maxDamage - minDamage + 1);
+    final base = equippedWeapon.minStat +
+        rng.nextInt(max(1, equippedWeapon.maxStat - equippedWeapon.minStat + 1));
+    return psychoActive ? base + 6 : base;
+  }
+
+  int rollArmorReduction(Random rng) {
+    if (equippedArmor.maxStat <= equippedArmor.minStat) {
+      return equippedArmor.minStat;
+    }
+    return equippedArmor.minStat +
+        rng.nextInt(equippedArmor.maxStat - equippedArmor.minStat + 1);
   }
 
   void heal(int amount) {
@@ -97,8 +178,7 @@ class Room {
   final ContentType contentType;
   RoomState state;
   final Enemy? enemy;
-  final LootItem? loot;
-  bool isLootClaimed;
+  ScrapPile? scrapPile;
 
   Room({
     required this.floorIndex,
@@ -107,13 +187,12 @@ class Room {
     required this.contentType,
     this.state = RoomState.unrevealed,
     this.enemy,
-    this.loot,
-    this.isLootClaimed = false,
+    this.scrapPile,
   });
 
   bool get isElevator => type == RoomType.elevator;
   bool get hasUnresolvedEnemy => enemy != null && !enemy!.isDead;
-  bool get hasUnclaimedLoot => loot != null && !isLootClaimed;
+  bool get hasUnsearchedScrap => scrapPile != null && !scrapPile!.isSearched;
 }
 
 class Floor {
@@ -144,4 +223,3 @@ class Building {
     return floor.rooms[roomIndex];
   }
 }
-

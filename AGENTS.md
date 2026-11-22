@@ -23,7 +23,9 @@ All autonomous agents modifying or expanding this codebase **must strictly honor
    - Crisp pixel art rendering with `FilterQuality.none`.
    - Side-cutaway building rooms with distinct states: `unrevealed` (fog of war), `outline` (discovered/adjacent), `active` (team present), `cleared`.
    - CRT / retro atmospheric details preserved through theme tokens.
-3. **Mandatory Indian Date Format (`DD-MM-YYYY`):**
+3. **Git Push Protocol:**
+   - **Never push to remote Git repositories automatically.** Only commit locally when work is verified, and push to remote ONLY when explicitly requested by the user.
+4. **Mandatory Indian Date Format (`DD-MM-YYYY`):**
    - **All dates displayed in UI, terminal logs, changelogs (`CHANGELOG.md`), and markdown documentation MUST strictly use Indian numerical date formatting (`DD-MM-YYYY` or `DD-MM-YY`).**
    - Never use `YYYY-MM-DD` or `MM/DD/YYYY` in human-facing text or documentation.
 
@@ -34,10 +36,11 @@ All autonomous agents modifying or expanding this codebase **must strictly honor
 | Invariant | Concept | Rule |
 |---|---|---|
 | **Room Fog of War** | Room Discovery | Unexplored rooms stay blacked out; adjacent rooms show outlines when current room is cleared. |
-| **Tap-to-Move** | Traversal | Tapping an outlined adjacent room sends the team to investigate. |
+| **Tap-to-Move & Forward-Only** | Traversal | Tapping an outlined adjacent room advances the scout. Once entered, previous rooms lock. |
 | **Vertical Transit** | Stairs & Elevators | Found in designated rooms; allows moving between floors (ground, upper levels, sub-basements). |
-| **Room Encounters** | Event Resolution | Each room resolves to: `Loot`, `Combat`, or `Empty / Narrative`. |
-| **Squad Mechanics** | Team Management | Squad enters as a cohesive unit with shared or individual vitals and inventory. |
+| **Scrap Pile System** | Loot Resolution | Defeated hostiles transform into searchables scrap piles (1 drop max for grunts, jackpot for bosses). |
+| **Paid Requisition** | Loadout Economy | Unlocked high-tier weapons cost upfront Gold to deploy. High firepower balances against mission payout margins. |
+| **1v1 Tactical Combat** | Combat Pacing | 1-on-1 duels keeping turns snappy and mobile-friendly (<5 min runs). |
 
 ---
 
@@ -67,4 +70,5 @@ docs/
 - ❌ **Violating the 100% Offline Pledge** (Adding `http`, `dio`, analytics, Firebase, ad networks, or network permissions).
 - ❌ **Adding presentation files exceeding 400 lines.**
 - ❌ **Using non-Indian date formats (`YYYY-MM-DD` or `MM/DD/YYYY`) in changelogs or markdown documentation.** (Must use `DD-MM-YYYY`).
+- ❌ **Pushing to remote Git repositories without explicit user instruction.**
 - ❌ **Failing static analysis or breaking automated tests.**

@@ -9,7 +9,7 @@ class RoomStageView extends StatelessWidget {
   final CombatEngine? combat;
   final VoidCallback onAttack;
   final VoidCallback onUseMedkit;
-  final VoidCallback onClaimLoot;
+  final VoidCallback onSearchScrap;
 
   const RoomStageView({
     super.key,
@@ -18,42 +18,40 @@ class RoomStageView extends StatelessWidget {
     required this.combat,
     required this.onAttack,
     required this.onUseMedkit,
-    required this.onClaimLoot,
+    required this.onSearchScrap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: PixelTheme.roomActive,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildRoomHeader(),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Expanded(
             child: Container(
               decoration: PixelTheme.pixelBox(
                 background: PixelTheme.roomVoid,
                 borderColor: PixelTheme.borderPixel,
               ),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
-                  // Scout side
                   Expanded(child: _buildScoutFigure()),
                   Container(
                     width: 2,
                     color: PixelTheme.borderPixel,
-                    margin: const EdgeInsets.symmetric(horizontal: 12),
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
                   ),
-                  // Encounter side
                   Expanded(child: _buildEncounterSide()),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _buildActionFooter(),
         ],
       ),
@@ -64,28 +62,30 @@ class RoomStageView extends StatelessWidget {
     String typeLabel = room.type.name.toUpperCase();
     if (room.isElevator) typeLabel = 'ELEVATOR SHAFT';
 
+    final hasScrap = room.hasUnsearchedScrap;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'ROOM SECTOR: $typeLabel',
+          'SECTOR: $typeLabel',
           style: PixelTheme.pixelStyle(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.bold,
             color: PixelTheme.textLight,
           ),
         ),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           color: room.hasUnresolvedEnemy
               ? PixelTheme.alertRed
-              : (room.hasUnclaimedLoot ? PixelTheme.chestGold : PixelTheme.borderPixel),
+              : (hasScrap ? PixelTheme.chestGold : PixelTheme.borderPixel),
           child: Text(
             room.hasUnresolvedEnemy
-                ? 'HOSTILE DETECTED'
-                : (room.hasUnclaimedLoot ? 'SUPPLIES FOUND' : 'CLEAR'),
+                ? 'HOSTILE PRESENT'
+                : (hasScrap ? 'SCRAP PILE DETECTED' : 'SECURE'),
             style: PixelTheme.pixelStyle(
-              fontSize: 9,
+              fontSize: 8,
               fontWeight: FontWeight.bold,
               color: PixelTheme.roomVoid,
             ),
@@ -99,26 +99,19 @@ class RoomStageView extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(
-          Icons.shield,
-          size: 42,
-          color: PixelTheme.neonGreen,
-        ),
-        const SizedBox(height: 8),
+        const Icon(Icons.shield, size: 38, color: PixelTheme.neonGreen),
+        const SizedBox(height: 6),
         Text(
           player.name.toUpperCase(),
           style: PixelTheme.pixelStyle(
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: FontWeight.bold,
             color: PixelTheme.neonGreen,
           ),
         ),
         Text(
-          'DMG: ${player.minDamage}-${player.maxDamage}',
-          style: PixelTheme.pixelStyle(
-            fontSize: 9,
-            color: PixelTheme.textMuted,
-          ),
+          'ATK: ${player.equippedWeapon.minStat}-${player.equippedWeapon.maxStat}',
+          style: PixelTheme.pixelStyle(fontSize: 8, color: PixelTheme.textMuted),
         ),
       ],
     );
@@ -132,26 +125,21 @@ class RoomStageView extends StatelessWidget {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.pest_control,
-            size: 42,
-            color: PixelTheme.alertRed,
-          ),
-          const SizedBox(height: 8),
+          const Icon(Icons.pest_control, size: 38, color: PixelTheme.alertRed),
+          const SizedBox(height: 6),
           Text(
             enemy.name.toUpperCase(),
             style: PixelTheme.pixelStyle(
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.bold,
               color: PixelTheme.alertRed,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
-          // Enemy HP bar
           Container(
-            height: 6,
-            width: 80,
+            height: 5,
+            width: 70,
             color: PixelTheme.roomUnrevealed,
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
@@ -161,36 +149,40 @@ class RoomStageView extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            '${enemy.currentHp} / ${enemy.maxHp} HP',
-            style: PixelTheme.pixelStyle(
-              fontSize: 9,
-              color: PixelTheme.textMuted,
-            ),
+            '${enemy.currentHp}/${enemy.maxHp} HP',
+            style: PixelTheme.pixelStyle(fontSize: 8, color: PixelTheme.textMuted),
           ),
         ],
       );
     }
 
-    if (room.hasUnclaimedLoot) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.inventory_2,
-            size: 42,
-            color: PixelTheme.chestGold,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            room.loot!.name.toUpperCase(),
-            style: PixelTheme.pixelStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: PixelTheme.chestGold,
+    if (room.scrapPile != null) {
+      final scrap = room.scrapPile!;
+      return GestureDetector(
+        onTap: scrap.isSearched ? null : onSearchScrap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.hardware,
+              size: 38,
+              color: scrap.isSearched ? PixelTheme.borderPixel : PixelTheme.chestGold,
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(
+              scrap.isSearched ? 'CLEARED SCRAP' : 'SCRAP PILE',
+              style: PixelTheme.pixelStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: scrap.isSearched ? PixelTheme.borderPixel : PixelTheme.chestGold,
+              ),
+            ),
+            Text(
+              scrap.isSearched ? 'Empty junk searched' : 'Tap to scavenge',
+              style: PixelTheme.pixelStyle(fontSize: 8, color: PixelTheme.textMuted),
+            ),
+          ],
+        ),
       );
     }
 
@@ -198,25 +190,15 @@ class RoomStageView extends StatelessWidget {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.elevator,
-            size: 42,
-            color: PixelTheme.elevatorCyan,
-          ),
-          const SizedBox(height: 8),
+          const Icon(Icons.elevator, size: 38, color: PixelTheme.elevatorCyan),
+          const SizedBox(height: 6),
           Text(
             'ELEVATOR SHAFT',
-            style: PixelTheme.pixelStyle(
-              fontSize: 10,
-              color: PixelTheme.elevatorCyan,
-            ),
+            style: PixelTheme.pixelStyle(fontSize: 10, color: PixelTheme.elevatorCyan),
           ),
           Text(
-            'Tap elevator on other floors to ride',
-            style: PixelTheme.pixelStyle(
-              fontSize: 8,
-              color: PixelTheme.textMuted,
-            ),
+            'Tap elevator on other floors',
+            style: PixelTheme.pixelStyle(fontSize: 8, color: PixelTheme.textMuted),
             textAlign: TextAlign.center,
           ),
         ],
@@ -226,18 +208,11 @@ class RoomStageView extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(
-          Icons.done_all,
-          size: 36,
-          color: PixelTheme.borderPixel,
-        ),
-        const SizedBox(height: 8),
+        const Icon(Icons.done_all, size: 32, color: PixelTheme.borderPixel),
+        const SizedBox(height: 6),
         Text(
-          'SECTOR SECURE',
-          style: PixelTheme.pixelStyle(
-            fontSize: 10,
-            color: PixelTheme.textMuted,
-          ),
+          'SECTOR CLEAR',
+          style: PixelTheme.pixelStyle(fontSize: 9, color: PixelTheme.textMuted),
         ),
       ],
     );
@@ -253,14 +228,14 @@ class RoomStageView extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: PixelTheme.alertRed,
                 shape: const RoundedRectangleBorder(),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 10),
               ),
               onPressed: onAttack,
-              icon: const Icon(Icons.flash_on, size: 16, color: PixelTheme.roomVoid),
+              icon: const Icon(Icons.flash_on, size: 14, color: PixelTheme.roomVoid),
               label: Text(
                 'ATTACK TARGET',
                 style: PixelTheme.pixelStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.bold,
                   color: PixelTheme.roomVoid,
                 ),
@@ -273,14 +248,14 @@ class RoomStageView extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: PixelTheme.elevatorCyan,
                 shape: const RoundedRectangleBorder(),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 10),
               ),
               onPressed: player.medkits > 0 ? onUseMedkit : null,
-              icon: const Icon(Icons.medication, size: 16, color: PixelTheme.roomVoid),
+              icon: const Icon(Icons.medication, size: 14, color: PixelTheme.roomVoid),
               label: Text(
-                'MEDKIT (${player.medkits})',
+                'HEAL (${player.medkits})',
                 style: PixelTheme.pixelStyle(
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: FontWeight.bold,
                   color: PixelTheme.roomVoid,
                 ),
@@ -291,17 +266,17 @@ class RoomStageView extends StatelessWidget {
       );
     }
 
-    if (room.hasUnclaimedLoot) {
+    if (room.hasUnsearchedScrap) {
       return ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
           backgroundColor: PixelTheme.chestGold,
           shape: const RoundedRectangleBorder(),
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 10),
         ),
-        onPressed: onClaimLoot,
-        icon: const Icon(Icons.lock_open, size: 16, color: PixelTheme.roomVoid),
+        onPressed: onSearchScrap,
+        icon: const Icon(Icons.search, size: 16, color: PixelTheme.roomVoid),
         label: Text(
-          'LOOT CONTAINER',
+          'SCAVENGE SCRAP PILE',
           style: PixelTheme.pixelStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
@@ -314,4 +289,3 @@ class RoomStageView extends StatelessWidget {
     return const SizedBox.shrink();
   }
 }
-

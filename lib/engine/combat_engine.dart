@@ -10,12 +10,14 @@ enum CombatStatus {
 class CombatRoundResult {
   final int playerDamageDealt;
   final int enemyDamageDealt;
+  final int damageAbsorbedByArmor;
   final String narrative;
   final CombatStatus status;
 
   const CombatRoundResult({
     required this.playerDamageDealt,
     required this.enemyDamageDealt,
+    required this.damageAbsorbedByArmor,
     required this.narrative,
     required this.status,
   });
@@ -44,6 +46,7 @@ class CombatEngine {
       return CombatRoundResult(
         playerDamageDealt: 0,
         enemyDamageDealt: 0,
+        damageAbsorbedByArmor: 0,
         narrative: 'Combat already resolved.',
         status: status,
       );
@@ -54,49 +57,51 @@ class CombatEngine {
     enemy.currentHp = max(0, enemy.currentHp - pDmg);
 
     if (enemy.isDead) {
-      // Victory
-      String narrative = '${player.name} struck ${enemy.name} for $pDmg DMG! ${enemy.name} was eliminated!';
-      if (enemy.lootDrop != null) {
-        final drop = enemy.lootDrop!;
-        if (drop.caps > 0) {
-          player.caps += drop.caps;
-          narrative += ' Found ${drop.caps} Caps!';
-        }
-        if (drop.healAmount > 0) {
-          player.medkits += 1;
-          narrative += ' Found 1x ${drop.name}!';
-        }
-      }
+      // Award bounty gold on kill
+      player.gold += enemy.bountyGold;
+      final psychoNote = player.psychoActive ? ' (Psycho boost expired)' : '';
+      player.psychoActive = false;
+
+      final narrative =
+          '${player.name} struck ${enemy.name} for $pDmg DMG! Target eliminated! Bounty +${enemy.bountyGold} Gold awarded.$psychoNote';
+
       return CombatRoundResult(
         playerDamageDealt: pDmg,
         enemyDamageDealt: 0,
+        damageAbsorbedByArmor: 0,
         narrative: narrative,
         status: CombatStatus.victory,
       );
     }
 
-    // 2. Enemy counter-attacks
-    final eDmg = enemy.rollDamage(rng);
-    player.currentHp = max(0, player.currentHp - eDmg);
+    // 2. Enemy counter-attacks (Armor DR absorbs damage)
+    final rawEnemyDmg = enemy.rollDamage(rng);
+    final armorDR = player.rollArmorReduction(rng);
+    final netDmg = max(0, rawEnemyDmg - armorDR);
+
+    player.currentHp = max(0, player.currentHp - netDmg);
 
     if (player.isDead) {
       return CombatRoundResult(
         playerDamageDealt: pDmg,
-        enemyDamageDealt: eDmg,
-        narrative: '${player.name} dealt $pDmg DMG, but ${enemy.name} counter-struck for $eDmg DMG. ${player.name} flatlined!',
+        enemyDamageDealt: netDmg,
+        damageAbsorbedByArmor: armorDR,
+        narrative:
+            '${player.name} dealt $pDmg DMG. ${enemy.name} struck back for $rawEnemyDmg DMG (Armor blocked $armorDR). ${player.name} flatlined!',
         status: CombatStatus.defeat,
       );
     }
 
     return CombatRoundResult(
       playerDamageDealt: pDmg,
-      enemyDamageDealt: eDmg,
-      narrative: '${player.name} dealt $pDmg DMG. ${enemy.name} retaliated for $eDmg DMG.',
+      enemyDamageDealt: netDmg,
+      damageAbsorbedByArmor: armorDR,
+      narrative:
+          '${player.name} hit for $pDmg DMG. ${enemy.name} retaliated for $netDmg DMG ($armorDR absorbed).',
       status: CombatStatus.inProgress,
     );
   }
 
-  /// Use a field medkit if available
   bool useMedkit() {
     if (player.medkits <= 0 || player.currentHp >= player.maxHp) {
       return false;
@@ -105,5 +110,10 @@ class CombatEngine {
     player.heal(50);
     return true;
   }
-}
 
+  bool usePsycho() {
+    if (player.psychoActive) return false;
+    player.psychoActive = true;
+    return true;
+  }
+}

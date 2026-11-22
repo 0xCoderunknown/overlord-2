@@ -6,6 +6,7 @@ import '../../engine/exploration_controller.dart';
 import '../widgets/building_cutaway_view.dart';
 import '../widgets/pixel_hud.dart';
 import '../widgets/room_stage_view.dart';
+import '../widgets/scrap_loot_dialog.dart';
 
 class ExpeditionScreen extends StatefulWidget {
   const ExpeditionScreen({super.key});
@@ -35,6 +36,7 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
     _controller = ExplorationController(
       building: building,
       player: player,
+      buildingGenerator: generator,
     );
     _controller.addListener(_onControllerUpdate);
   }
@@ -68,7 +70,7 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
         title: Text(
           'OVERLORD 2 // SECTOR RUN',
           style: PixelTheme.pixelStyle(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.bold,
             color: PixelTheme.neonGreen,
             letterSpacing: 1.5,
@@ -87,35 +89,47 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
         ),
       ),
       body: SafeArea(
-        child: player.isDead
-            ? _buildDefeatView()
-            : Column(
-                children: [
-                  PixelHud(
-                    player: player,
-                    floorIndex: _controller.currentFloorIndex,
-                    roomIndex: _controller.currentRoomIndex,
-                    eventLog: _controller.lastEventLog,
+        child: Stack(
+          children: [
+            player.isDead
+                ? _buildDefeatView()
+                : Column(
+                    children: [
+                      PixelHud(
+                        player: player,
+                        floorIndex: _controller.currentFloorIndex,
+                        roomIndex: _controller.currentRoomIndex,
+                        eventLog: _controller.lastEventLog,
+                      ),
+                      BuildingCutawayView(
+                        building: _controller.building,
+                        currentFloorIndex: _controller.currentFloorIndex,
+                        currentRoomIndex: _controller.currentRoomIndex,
+                        canMoveTo: _controller.canMoveTo,
+                        onRoomTap: (f, r) => _controller.moveTo(f, r),
+                      ),
+                      Expanded(
+                        child: RoomStageView(
+                          room: _controller.currentRoom,
+                          player: player,
+                          combat: _controller.activeCombat,
+                          onAttack: () => _controller.executeCombatRound(),
+                          onUseMedkit: () => _controller.useMedkit(),
+                          onSearchScrap: () => _controller.searchScrapPile(),
+                        ),
+                      ),
+                    ],
                   ),
-                  BuildingCutawayView(
-                    building: _controller.building,
-                    currentFloorIndex: _controller.currentFloorIndex,
-                    currentRoomIndex: _controller.currentRoomIndex,
-                    canMoveTo: _controller.canMoveTo,
-                    onRoomTap: (f, r) => _controller.moveTo(f, r),
-                  ),
-                  Expanded(
-                    child: RoomStageView(
-                      room: _controller.currentRoom,
-                      player: player,
-                      combat: _controller.activeCombat,
-                      onAttack: () => _controller.executeCombatRound(),
-                      onUseMedkit: () => _controller.useMedkit(),
-                      onClaimLoot: () => _controller.claimRoomLoot(),
-                    ),
-                  ),
-                ],
+            // Salvage Loot Popup
+            if (_controller.pendingScrapItem != null)
+              ScrapLootDialog(
+                item: _controller.pendingScrapItem!,
+                player: player,
+                onEquip: () => _controller.equipPendingItem(),
+                onScrap: () => _controller.scrapPendingItem(),
               ),
+          ],
+        ),
       ),
     );
   }
@@ -180,4 +194,3 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
     );
   }
 }
-

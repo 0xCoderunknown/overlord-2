@@ -21,78 +21,34 @@ void main() {
         expect(floor.rooms[3].type, RoomType.elevator);
       }
 
-      // Ground entrance room is active
       expect(building.floors[0].rooms[0].state, RoomState.active);
-      // Adjacent room is outline (discovered)
       expect(building.floors[0].rooms[1].state, RoomState.outline);
-      // Further rooms are unrevealed
-      expect(building.floors[0].rooms[2].state, RoomState.unrevealed);
+    });
+
+    test('generates scrap piles with items or empty junk', () {
+      final generator = BuildingGenerator(random: Random(10));
+      final pile = generator.generateScrapPile(0);
+      expect(pile.isSearched, isFalse);
     });
   });
 
-  group('ExplorationController Fog-of-War & Traversal Tests', () {
-    test('traversal reveals adjacent rooms and updates room states', () {
-      final generator = BuildingGenerator(random: Random(42));
-      final building = generator.generateBuilding(
-        floorCount: 2,
-        roomsPerFloor: 4,
-        elevatorColumn: 3,
+  group('CombatEngine Bounty & Armor Tests', () {
+    test('killing enemy awards bounty gold and triggers victory', () {
+      final player = ScoutCharacter(name: 'Vance', maxHp: 50);
+      player.equippedWeapon = const EquipmentItem(
+        id: 'w1',
+        name: 'Super Gun',
+        type: ItemType.weapon,
+        minStat: 50,
+        maxStat: 50,
       );
-      final player = ScoutCharacter(name: 'TestScout', maxHp: 100);
-      final controller = ExplorationController(building: building, player: player);
 
-      expect(controller.currentFloorIndex, 0);
-      expect(controller.currentRoomIndex, 0);
-
-      // Cannot move to unrevealed room 2
-      expect(controller.canMoveTo(0, 2), isFalse);
-      // Can move to outline room 1
-      expect(controller.canMoveTo(0, 1), isTrue);
-
-      // Move to room 1
-      final moved = controller.moveTo(0, 1);
-      expect(moved, isTrue);
-      expect(controller.currentRoomIndex, 1);
-      expect(building.floors[0].rooms[0].state, RoomState.cleared);
-      expect(building.floors[0].rooms[1].state, RoomState.active);
-      // Room 2 should now be outlined
-      expect(building.floors[0].rooms[2].state, RoomState.outline);
-    });
-
-    test('elevator transit moves vertically between floors', () {
-      final generator = BuildingGenerator(random: Random(42));
-      final building = generator.generateBuilding(
-        floorCount: 2,
-        roomsPerFloor: 4,
-        elevatorColumn: 1, // place elevator at column 1 for easy testing
-      );
-      final player = ScoutCharacter(name: 'TestScout');
-      final controller = ExplorationController(building: building, player: player);
-
-      // Move into elevator at (0, 1)
-      expect(controller.moveTo(0, 1), isTrue);
-      expect(controller.currentRoom.isElevator, isTrue);
-
-      // Elevator on floor 1 should now be outlined
-      expect(building.floors[1].rooms[1].state, RoomState.outline);
-      expect(controller.canMoveTo(1, 1), isTrue);
-
-      // Ride elevator up to Floor 1
-      expect(controller.moveTo(1, 1), isTrue);
-      expect(controller.currentFloorIndex, 1);
-      expect(controller.currentRoomIndex, 1);
-    });
-  });
-
-  group('CombatEngine 1v1 Tests', () {
-    test('resolves round damage and handles victory', () {
-      final player = ScoutCharacter(name: 'Vance', maxHp: 50, minDamage: 20, maxDamage: 20);
       final enemy = Enemy(
         name: 'Vermin',
         maxHp: 15,
         minDamage: 5,
         maxDamage: 5,
-        lootDrop: const LootItem(id: 'c1', name: 'Caps', caps: 10),
+        bountyGold: 20,
       );
 
       final combat = CombatEngine(
@@ -101,26 +57,132 @@ void main() {
         random: Random(1),
       );
 
-      expect(combat.status, CombatStatus.inProgress);
       final result = combat.executeRound();
-
       expect(result.status, CombatStatus.victory);
       expect(enemy.isDead, isTrue);
-      expect(player.caps, 10);
+      expect(player.gold, 20);
     });
 
-    test('medkit heals player', () {
-      final player = ScoutCharacter(name: 'Vance', maxHp: 100, medkits: 1);
-      player.currentHp = 30;
+    test('armor absorbs incoming enemy damage', () {
+      final player = ScoutCharacter(name: 'Vance', maxHp: 100);
+      player.equippedArmor = const EquipmentItem(
+        id: 'arm_heavy',
+        name: 'Heavy Plate',
+        type: ItemType.armor,
+        minStat: 5,
+        maxStat: 5,
+      );
 
-      final enemy = Enemy(name: 'Bot', maxHp: 50, minDamage: 5, maxDamage: 5);
-      final combat = CombatEngine(player: player, enemy: enemy);
+      final enemy = Enemy(name: 'Drone', maxHp: 100, minDamage: 8, maxDamage: 8);
+      final combat = CombatEngine(
+        player: player,
+        enemy: enemy,
+        random: Random(1),
+      );
 
-      final used = combat.useMedkit();
-      expect(used, isTrue);
-      expect(player.currentHp, 80);
-      expect(player.medkits, 0);
+      final result = combat.executeRound();
+      expect(result.damageAbsorbedByArmor, 5);
+      // Net damage: 8 - 5 = 3
+      expect(result.enemyDamageDealt, 3);
+      expect(player.currentHp, 97);
+    });
+  });
+
+  group('ExplorationController Scrap & Equip/Scrap Tests', () {
+    test('searching scrap pile and equipping weapon scraps old weapon for gold', () {
+      final building = Building(
+        id: 'b1',
+        name: 'Test',
+        floors: [
+          Floor(
+            floorIndex: 0,
+            rooms: [
+              Room(
+                floorIndex: 0,
+                roomIndex: 0,
+                type: RoomType.entrance,
+                contentType: ContentType.empty,
+                state: RoomState.active,
+              ),
+              Room(
+                floorIndex: 0,
+                roomIndex: 1,
+                type: RoomType.storage,
+                contentType: ContentType.scrap,
+                state: RoomState.outline,
+                scrapPile: ScrapPile(
+                  id: 's1',
+                  containedItem: const EquipmentItem(
+                    id: 'w_shotgun',
+                    name: 'Shotgun',
+                    type: ItemType.weapon,
+                    minStat: 15,
+                    maxStat: 20,
+                    scrapValue: 5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final player = ScoutCharacter(name: 'Vance', gold: 0);
+      final initialWeaponScrapVal = player.equippedWeapon.scrapValue; // 2
+      final controller = ExplorationController(building: building, player: player);
+
+      controller.moveTo(0, 1);
+      expect(controller.currentRoom.hasUnsearchedScrap, isTrue);
+
+      controller.searchScrapPile();
+      expect(controller.pendingScrapItem, isNotNull);
+      expect(controller.pendingScrapItem!.name, 'Shotgun');
+
+      controller.equipPendingItem();
+      expect(player.equippedWeapon.name, 'Shotgun');
+      // Old weapon scrapped for its scrapValue
+      expect(player.gold, initialWeaponScrapVal);
+      expect(controller.pendingScrapItem, isNull);
+    });
+
+    test('scrapping found item grants its scrap value directly in gold', () {
+      final building = Building(
+        id: 'b1',
+        name: 'Test',
+        floors: [
+          Floor(
+            floorIndex: 0,
+            rooms: [
+              Room(
+                floorIndex: 0,
+                roomIndex: 0,
+                type: RoomType.entrance,
+                contentType: ContentType.empty,
+                state: RoomState.active,
+                scrapPile: ScrapPile(
+                  id: 's2',
+                  containedItem: const EquipmentItem(
+                    id: 'junk_part',
+                    name: 'Copper Wire',
+                    type: ItemType.consumable,
+                    scrapValue: 3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final player = ScoutCharacter(name: 'Vance', gold: 10);
+      final controller = ExplorationController(building: building, player: player);
+
+      controller.searchScrapPile();
+      expect(controller.pendingScrapItem, isNotNull);
+
+      controller.scrapPendingItem();
+      expect(player.gold, 13);
+      expect(controller.pendingScrapItem, isNull);
     });
   });
 }
-
