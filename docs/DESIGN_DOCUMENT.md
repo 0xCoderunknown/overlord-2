@@ -65,3 +65,4 @@
 - [ ] Tap-to-Move squad navigation engine
 - [ ] Room Encounter System (Loot, Combat, Traps)
 - [ ] Vertical floor transit (Stairs / Elevators)
+
