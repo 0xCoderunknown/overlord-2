@@ -2,7 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:overlord_2/main.dart';
 
 void main() {
-  testWidgets('Overlord 2 renders unified facility rooms and HUD', (WidgetTester tester) async {
+  testWidgets('Overlord 2 renders unified facility rooms and HUD', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const Overlord2App());
     await tester.pumpAndSettle();
 

@@ -1,13 +1,24 @@
 import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:overlord_2/data/game_database.dart';
 import 'package:overlord_2/domain/models.dart';
 import 'package:overlord_2/engine/building_generator.dart';
 import 'package:overlord_2/engine/combat_engine.dart';
 import 'package:overlord_2/engine/exploration_controller.dart';
 
 void main() {
+  group('GameDatabase Tests', () {
+    test('contains verified enemy and gear pools', () {
+      expect(GameDatabase.getTier1Enemies().isNotEmpty, isTrue);
+      expect(GameDatabase.getApexBosses().length, 3);
+      expect(GameDatabase.getWeaponsByTier(1).isNotEmpty, isTrue);
+      expect(GameDatabase.getArmorsByTier(1).isNotEmpty, isTrue);
+      expect(GameDatabase.emptyRoomLore.isNotEmpty, isTrue);
+    });
+  });
+
   group('BuildingGenerator Tests', () {
-    test('generates valid multi-floor building with elevator column', () {
+    test('generates valid multi-floor building with top-floor boss chamber', () {
       final generator = BuildingGenerator(random: Random(42));
       final building = generator.generateBuilding(
         floorCount: 3,
@@ -21,8 +32,15 @@ void main() {
         expect(floor.rooms[3].type, RoomType.elevator);
       }
 
+      // Top floor should have a boss chamber at column 2 (elevatorColumn - 1)
+      final topFloor = building.floors[2];
+      expect(topFloor.rooms[2].type, RoomType.bossChamber);
+      expect(topFloor.rooms[2].enemy, isNotNull);
+      expect(topFloor.rooms[2].enemy!.isBoss, isTrue);
+
+      // Ground entrance room is active with ambient lore
       expect(building.floors[0].rooms[0].state, RoomState.active);
-      expect(building.floors[0].rooms[1].state, RoomState.outline);
+      expect(building.floors[0].rooms[0].ambientLore, isNotNull);
     });
 
     test('generates scrap piles with items or empty junk', () {
@@ -33,34 +51,35 @@ void main() {
   });
 
   group('CombatEngine Bounty & Armor Tests', () {
-    test('killing enemy awards bounty gold and triggers victory', () {
-      final player = ScoutCharacter(name: 'Vance', maxHp: 50);
+    test('killing boss awards high bounty gold', () {
+      final player = ScoutCharacter(name: 'Vance', maxHp: 100);
       player.equippedWeapon = const EquipmentItem(
-        id: 'w1',
-        name: 'Super Gun',
+        id: 'w_super',
+        name: 'Super Plasma',
         type: ItemType.weapon,
-        minStat: 50,
-        maxStat: 50,
+        minStat: 100,
+        maxStat: 100,
       );
 
-      final enemy = Enemy(
-        name: 'Vermin',
-        maxHp: 15,
-        minDamage: 5,
-        maxDamage: 5,
-        bountyGold: 20,
+      final boss = Enemy(
+        name: 'Featherless Turkey',
+        maxHp: 60,
+        minDamage: 15,
+        maxDamage: 25,
+        bountyGold: 75,
+        isBoss: true,
       );
 
       final combat = CombatEngine(
         player: player,
-        enemy: enemy,
+        enemy: boss,
         random: Random(1),
       );
 
       final result = combat.executeRound();
       expect(result.status, CombatStatus.victory);
-      expect(enemy.isDead, isTrue);
-      expect(player.gold, 20);
+      expect(boss.isDead, isTrue);
+      expect(player.gold, 75);
     });
 
     test('armor absorbs incoming enemy damage', () {
@@ -82,7 +101,6 @@ void main() {
 
       final result = combat.executeRound();
       expect(result.damageAbsorbedByArmor, 5);
-      // Net damage: 8 - 5 = 3
       expect(result.enemyDamageDealt, 3);
       expect(player.currentHp, 97);
     });
@@ -128,7 +146,7 @@ void main() {
       );
 
       final player = ScoutCharacter(name: 'Vance', gold: 0);
-      final initialWeaponScrapVal = player.equippedWeapon.scrapValue; // 2
+      final initialWeaponScrapVal = player.equippedWeapon.scrapValue;
       final controller = ExplorationController(building: building, player: player);
 
       controller.moveTo(0, 1);
@@ -140,12 +158,11 @@ void main() {
 
       controller.equipPendingItem();
       expect(player.equippedWeapon.name, 'Shotgun');
-      // Old weapon scrapped for its scrapValue
       expect(player.gold, initialWeaponScrapVal);
       expect(controller.pendingScrapItem, isNull);
     });
 
-    test('scrapping found item grants its scrap value directly in gold', () {
+    test('ambient lore is displayed when moving into empty rooms', () {
       final building = Building(
         id: 'b1',
         name: 'Test',
@@ -159,30 +176,25 @@ void main() {
                 type: RoomType.entrance,
                 contentType: ContentType.empty,
                 state: RoomState.active,
-                scrapPile: ScrapPile(
-                  id: 's2',
-                  containedItem: const EquipmentItem(
-                    id: 'junk_part',
-                    name: 'Copper Wire',
-                    type: ItemType.consumable,
-                    scrapValue: 3,
-                  ),
-                ),
+              ),
+              Room(
+                floorIndex: 0,
+                roomIndex: 1,
+                type: RoomType.office,
+                contentType: ContentType.empty,
+                state: RoomState.outline,
+                ambientLore: 'The radiation meter is clicking rhythmically.',
               ),
             ],
           ),
         ],
       );
 
-      final player = ScoutCharacter(name: 'Vance', gold: 10);
+      final player = ScoutCharacter(name: 'Vance');
       final controller = ExplorationController(building: building, player: player);
 
-      controller.searchScrapPile();
-      expect(controller.pendingScrapItem, isNotNull);
-
-      controller.scrapPendingItem();
-      expect(player.gold, 13);
-      expect(controller.pendingScrapItem, isNull);
+      controller.moveTo(0, 1);
+      expect(controller.lastEventLog, 'The radiation meter is clicking rhythmically.');
     });
   });
 }

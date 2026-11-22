@@ -32,12 +32,9 @@ class PixelRoomView extends StatelessWidget {
     if (room.state == RoomState.unrevealed) {
       return _buildUnrevealedRoom();
     }
-
     if (room.state == RoomState.outline) {
       return _buildOutlineRoom();
     }
-
-    // Active or Cleared room
     return _buildRevealedRoom();
   }
 
@@ -95,11 +92,15 @@ class PixelRoomView extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                room.isElevator ? 'ELEVATOR SHAFT' : 'ADJACENT SECTOR',
+                room.isElevator
+                    ? 'ELEVATOR SHAFT'
+                    : (room.type == RoomType.bossChamber ? 'WARNING: APEX CHAMBER' : 'ADJACENT SECTOR'),
                 style: PixelTheme.pixelStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: isMoveTarget ? PixelTheme.neonGreen : PixelTheme.textMuted,
+                  color: room.type == RoomType.bossChamber
+                      ? PixelTheme.alertRed
+                      : (isMoveTarget ? PixelTheme.neonGreen : PixelTheme.textMuted),
                 ),
               ),
               if (isMoveTarget) ...[
@@ -125,6 +126,8 @@ class PixelRoomView extends StatelessWidget {
   }
 
   Widget _buildRevealedRoom() {
+    final isBossChamber = room.type == RoomType.bossChamber;
+
     return Container(
       width: 260,
       height: 170,
@@ -132,16 +135,15 @@ class PixelRoomView extends StatelessWidget {
       decoration: BoxDecoration(
         color: PixelTheme.roomCleared,
         border: Border.all(
-          color: isActive ? PixelTheme.neonGreen : PixelTheme.borderPixel,
+          color: isActive
+              ? (isBossChamber ? PixelTheme.alertRed : PixelTheme.neonGreen)
+              : PixelTheme.borderPixel,
           width: isActive ? 2 : 1,
         ),
       ),
       child: Stack(
         children: [
-          // Background Room Wallpaper & Layout
           _buildRoomBackground(),
-
-          // Room Header Label
           Positioned(
             top: 6,
             left: 8,
@@ -150,11 +152,15 @@ class PixelRoomView extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  room.isElevator ? 'ELEVATOR SHAFT' : room.type.name.toUpperCase(),
+                  room.isElevator
+                      ? 'ELEVATOR SHAFT'
+                      : (isBossChamber ? 'APEX BOSS CHAMBER' : room.type.name.toUpperCase()),
                   style: PixelTheme.pixelStyle(
                     fontSize: 8,
                     fontWeight: FontWeight.bold,
-                    color: isActive ? PixelTheme.neonGreen : PixelTheme.textMuted,
+                    color: isBossChamber
+                        ? PixelTheme.alertRed
+                        : (isActive ? PixelTheme.neonGreen : PixelTheme.textMuted),
                   ),
                 ),
                 Text(
@@ -167,8 +173,6 @@ class PixelRoomView extends StatelessWidget {
               ],
             ),
           ),
-
-          // Ground floor level with characters / items inside the room
           Positioned(
             bottom: 12,
             left: 14,
@@ -177,21 +181,16 @@ class PixelRoomView extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // Scout character standing in room
                 if (isActive) _buildScoutInRoom() else const SizedBox(width: 40),
-
-                // Center/Right content: Enemy, Scrap Pile, or Elevator
                 _buildRoomInteriorContent(),
               ],
             ),
           ),
-
-          // In-Room Combat Controls overlay
           if (isActive && room.hasUnresolvedEnemy)
             Positioned(
-              top: 30,
-              left: 20,
-              right: 20,
+              top: 26,
+              left: 16,
+              right: 16,
               child: _buildInRoomCombatBar(),
             ),
         ],
@@ -229,7 +228,6 @@ class PixelRoomView extends StatelessWidget {
   }
 
   Widget _buildRoomInteriorContent() {
-    // Enemy inside the room
     if (room.hasUnresolvedEnemy) {
       final enemy = room.enemy!;
       final hpRatio = (enemy.currentHp / enemy.maxHp).clamp(0.0, 1.0);
@@ -237,10 +235,24 @@ class PixelRoomView extends StatelessWidget {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // HP bar over enemy head
+          if (enemy.isBoss) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              color: PixelTheme.alertRed,
+              child: Text(
+                '★ APEX BOSS ★',
+                style: PixelTheme.pixelStyle(
+                  fontSize: 6,
+                  fontWeight: FontWeight.bold,
+                  color: PixelTheme.roomVoid,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+          ],
           Container(
             height: 4,
-            width: 50,
+            width: enemy.isBoss ? 70 : 50,
             color: PixelTheme.roomVoid,
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
@@ -249,7 +261,11 @@ class PixelRoomView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          const Icon(Icons.pest_control, color: PixelTheme.alertRed, size: 36),
+          Icon(
+            enemy.isBoss ? Icons.smart_toy : Icons.pest_control,
+            color: PixelTheme.alertRed,
+            size: enemy.isBoss ? 42 : 34,
+          ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
             color: PixelTheme.roomVoid,
@@ -266,7 +282,6 @@ class PixelRoomView extends StatelessWidget {
       );
     }
 
-    // Scrap pile inside the room
     if (room.scrapPile != null) {
       final scrap = room.scrapPile!;
       return GestureDetector(
@@ -296,7 +311,6 @@ class PixelRoomView extends StatelessWidget {
       );
     }
 
-    // Elevator doors inside the room
     if (room.isElevator) {
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -304,10 +318,7 @@ class PixelRoomView extends StatelessWidget {
           const Icon(Icons.elevator, color: PixelTheme.elevatorCyan, size: 36),
           Text(
             'ELEVATOR',
-            style: PixelTheme.pixelStyle(
-              fontSize: 7,
-              color: PixelTheme.elevatorCyan,
-            ),
+            style: PixelTheme.pixelStyle(fontSize: 7, color: PixelTheme.elevatorCyan),
           ),
         ],
       );
@@ -316,7 +327,7 @@ class PixelRoomView extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.check_circle_outline, color: PixelTheme.borderPixel, size: 24),
+        const Icon(Icons.check_circle_outline, color: PixelTheme.borderPixel, size: 22),
         Text(
           'CLEARED',
           style: PixelTheme.pixelStyle(fontSize: 7, color: PixelTheme.borderPixel),
@@ -330,7 +341,9 @@ class PixelRoomView extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: PixelTheme.roomVoid.withValues(alpha: 0.9),
-        border: Border.all(color: PixelTheme.alertRed),
+        border: Border.all(
+          color: room.enemy?.isBoss == true ? PixelTheme.warningAmber : PixelTheme.alertRed,
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -389,32 +402,13 @@ class _RoomInteriorPainter extends CustomPainter {
       ..color = const Color(0xFF2C3242)
       ..strokeWidth = 2;
 
-    // Floor slab
-    canvas.drawRect(
-      Rect.fromLTWH(0, size.height - 10, size.width, 10),
-      floorPaint,
-    );
+    canvas.drawRect(Rect.fromLTWH(0, size.height - 10, size.width, 10), floorPaint);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, 14), ceilingPaint);
 
-    // Ceiling slab
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, 14),
-      ceilingPaint,
-    );
-
-    // Wall grid beams
-    canvas.drawLine(
-      Offset(size.width * 0.33, 14),
-      Offset(size.width * 0.33, size.height - 10),
-      beamPaint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.66, 14),
-      Offset(size.width * 0.66, size.height - 10),
-      beamPaint,
-    );
+    canvas.drawLine(Offset(size.width * 0.33, 14), Offset(size.width * 0.33, size.height - 10), beamPaint);
+    canvas.drawLine(Offset(size.width * 0.66, 14), Offset(size.width * 0.66, size.height - 10), beamPaint);
 
     if (isElevator) {
-      // Elevator cables
       final cablePaint = Paint()
         ..color = const Color(0xFF00E5FF).withValues(alpha: 0.3)
         ..strokeWidth = 1;

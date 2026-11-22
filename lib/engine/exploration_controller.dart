@@ -78,13 +78,20 @@ class ExplorationController extends ChangeNotifier {
         player: player,
         enemy: currentRoom.enemy!,
       );
-      lastEventLog = 'Hostile ${currentRoom.enemy!.name} engaged!';
+      final enemy = currentRoom.enemy!;
+      if (enemy.isBoss) {
+        lastEventLog = 'DANGER! APEX BOSS [${enemy.name.toUpperCase()}] ENGAGED! ${enemy.description}';
+      } else {
+        lastEventLog = 'Hostile ${enemy.name} engaged! ${enemy.description}';
+      }
     } else {
       activeCombat = null;
       if (currentRoom.hasUnsearchedScrap) {
         lastEventLog = 'A salvageable Scrap Pile lies in the room.';
       } else if (currentRoom.isElevator) {
         lastEventLog = 'Elevator Shaft. Vertical transit online.';
+      } else if (currentRoom.ambientLore != null) {
+        lastEventLog = currentRoom.ambientLore;
       } else {
         lastEventLog = 'Sector cleared and quiet.';
       }

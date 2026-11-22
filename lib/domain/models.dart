@@ -8,6 +8,7 @@ enum RoomType {
   generator,
   storage,
   elevator,
+  bossChamber,
 }
 
 enum RoomState {
@@ -89,6 +90,8 @@ class Enemy {
   final int minDamage;
   final int maxDamage;
   final int bountyGold;
+  final bool isBoss;
+  final String description;
 
   Enemy({
     required this.name,
@@ -96,6 +99,8 @@ class Enemy {
     required this.minDamage,
     required this.maxDamage,
     this.bountyGold = 12,
+    this.isBoss = false,
+    this.description = '',
   }) : currentHp = maxHp;
 
   bool get isDead => currentHp <= 0;
@@ -179,6 +184,7 @@ class Room {
   RoomState state;
   final Enemy? enemy;
   ScrapPile? scrapPile;
+  String? ambientLore;
 
   Room({
     required this.floorIndex,
@@ -188,6 +194,7 @@ class Room {
     this.state = RoomState.unrevealed,
     this.enemy,
     this.scrapPile,
+    this.ambientLore,
   });
 
   bool get isElevator => type == RoomType.elevator;

@@ -1,4 +1,5 @@
 import 'dart:math';
+import '../data/game_database.dart';
 import '../domain/models.dart';
 
 class BuildingGenerator {
@@ -25,6 +26,8 @@ class BuildingGenerator {
 
     for (int f = 0; f < floorCount; f++) {
       final rooms = <Room>[];
+      final isTopFloor = f == floorCount - 1;
+
       for (int r = 0; r < roomsPerFloor; r++) {
         // Elevator Shaft
         if (r == elevatorColumn) {
@@ -38,7 +41,7 @@ class BuildingGenerator {
           continue;
         }
 
-        // Entrance Room: Floor 0, Room 0
+        // Entrance Room: Ground Floor, Room 0
         if (f == 0 && r == 0) {
           rooms.add(Room(
             floorIndex: f,
@@ -46,6 +49,22 @@ class BuildingGenerator {
             type: RoomType.entrance,
             contentType: ContentType.empty,
             state: RoomState.active,
+            ambientLore: 'Bunker airlock seals behind you. Mission initiated.',
+          ));
+          continue;
+        }
+
+        // Apex Boss Chamber on top floor right before elevator
+        if (isTopFloor && r == elevatorColumn - 1) {
+          final boss = _rollBoss();
+          rooms.add(Room(
+            floorIndex: f,
+            roomIndex: r,
+            type: RoomType.bossChamber,
+            contentType: ContentType.enemy,
+            state: RoomState.unrevealed,
+            enemy: boss,
+            ambientLore: 'Heavy structural tremors. An apex threat guards the sector.',
           ));
           continue;
         }
@@ -55,15 +74,17 @@ class BuildingGenerator {
         ContentType contentType;
         Enemy? enemy;
         ScrapPile? scrapPile;
+        String? ambient;
 
         if (roll < 45) {
           contentType = ContentType.enemy;
-          enemy = _generateEnemy(f);
+          enemy = _rollEnemyForFloor(f);
         } else if (roll < 70) {
           contentType = ContentType.scrap;
           scrapPile = generateScrapPile(f);
         } else {
           contentType = ContentType.empty;
+          ambient = GameDatabase.emptyRoomLore[rng.nextInt(GameDatabase.emptyRoomLore.length)];
         }
 
         rooms.add(Room(
@@ -74,6 +95,7 @@ class BuildingGenerator {
           state: RoomState.unrevealed,
           enemy: enemy,
           scrapPile: scrapPile,
+          ambientLore: ambient,
         ));
       }
       floors.add(Floor(floorIndex: f, rooms: rooms));
@@ -91,36 +113,44 @@ class BuildingGenerator {
     );
   }
 
-  Enemy _generateEnemy(int floorIndex) {
-    final enemies = [
-      Enemy(
-        name: 'Irradiated Scav-Rat',
-        maxHp: 18 + (floorIndex * 8),
-        minDamage: 4 + (floorIndex * 2),
-        maxDamage: 7 + (floorIndex * 2),
-        bountyGold: 8 + rng.nextInt(6),
-      ),
-      Enemy(
-        name: 'Rogue Sentry Drone',
-        maxHp: 30 + (floorIndex * 12),
-        minDamage: 6 + (floorIndex * 3),
-        maxDamage: 11 + (floorIndex * 3),
-        bountyGold: 15 + rng.nextInt(10),
-      ),
-      Enemy(
-        name: 'Raider Marauder',
-        maxHp: 26 + (floorIndex * 10),
-        minDamage: 5 + (floorIndex * 2),
-        maxDamage: 10 + (floorIndex * 3),
-        bountyGold: 12 + rng.nextInt(8),
-      ),
-    ];
+  Enemy _rollEnemyForFloor(int floorIndex) {
+    List<Enemy> pool;
+    if (floorIndex == 0) {
+      pool = GameDatabase.getTier1Enemies();
+    } else if (floorIndex == 1) {
+      pool = GameDatabase.getTier2Enemies();
+    } else {
+      pool = GameDatabase.getTier3Enemies();
+    }
 
-    return enemies[rng.nextInt(enemies.length)];
+    final template = pool[rng.nextInt(pool.length)];
+    return Enemy(
+      name: template.name,
+      maxHp: template.maxHp,
+      minDamage: template.minDamage,
+      maxDamage: template.maxDamage,
+      bountyGold: template.bountyGold,
+      isBoss: template.isBoss,
+      description: template.description,
+    );
+  }
+
+  Enemy _rollBoss() {
+    final bosses = GameDatabase.getApexBosses();
+    final template = bosses[rng.nextInt(bosses.length)];
+    return Enemy(
+      name: template.name,
+      maxHp: template.maxHp,
+      minDamage: template.minDamage,
+      maxDamage: template.maxDamage,
+      bountyGold: template.bountyGold,
+      isBoss: true,
+      description: template.description,
+    );
   }
 
   ScrapPile generateScrapPile(int floorIndex) {
-    // 25% chance to find an item in the scrap pile
+    // 25% chance to find loot in scrap pile
     final hasLoot = rng.nextInt(100) < 25;
     EquipmentItem? item;
 
@@ -136,96 +166,17 @@ class BuildingGenerator {
 
   EquipmentItem _rollScrapItem(int floorIndex) {
     final roll = rng.nextInt(100);
+    final tier = min(3, floorIndex + 1);
 
     // 40% Weapon, 30% Armor, 30% Consumable
     if (roll < 40) {
-      final weapons = [
-        EquipmentItem(
-          id: 'wpn_nailgun_${rng.nextInt(999)}',
-          name: 'Modified Nailgun',
-          type: ItemType.weapon,
-          minStat: 8 + floorIndex * 2,
-          maxStat: 14 + floorIndex * 3,
-          scrapValue: 3,
-          description: 'Pneumatic piston shoots sharpened iron nails.',
-        ),
-        EquipmentItem(
-          id: 'wpn_shotgun_${rng.nextInt(999)}',
-          name: 'Sawed-Off Shotgun',
-          type: ItemType.weapon,
-          minStat: 12 + floorIndex * 3,
-          maxStat: 18 + floorIndex * 4,
-          scrapValue: 5,
-          description: 'Devastating close-range scatter blast.',
-        ),
-        EquipmentItem(
-          id: 'wpn_rebar_${rng.nextInt(999)}',
-          name: 'Welded Rebar Club',
-          type: ItemType.weapon,
-          minStat: 9 + floorIndex * 2,
-          maxStat: 15 + floorIndex * 3,
-          scrapValue: 3,
-          description: 'Concrete block affixed to rusted rebar.',
-        ),
-      ];
+      final weapons = GameDatabase.getWeaponsByTier(tier);
       return weapons[rng.nextInt(weapons.length)];
     } else if (roll < 70) {
-      final armors = [
-        EquipmentItem(
-          id: 'arm_leather_${rng.nextInt(999)}',
-          name: 'Boiled Leather Vest',
-          type: ItemType.armor,
-          minStat: 3 + floorIndex,
-          maxStat: 6 + floorIndex,
-          scrapValue: 3,
-          description: 'Toughened leather stops claws and small blades.',
-        ),
-        EquipmentItem(
-          id: 'arm_scrap_${rng.nextInt(999)}',
-          name: 'Welded Scrap Plate',
-          type: ItemType.armor,
-          minStat: 5 + floorIndex * 2,
-          maxStat: 9 + floorIndex * 2,
-          scrapValue: 5,
-          description: 'Heavy road signs riveted to a chest plate.',
-        ),
-      ];
+      final armors = GameDatabase.getArmorsByTier(tier);
       return armors[rng.nextInt(armors.length)];
     } else {
-      final consumables = [
-        const EquipmentItem(
-          id: 'c_medkit',
-          name: 'Military Medkit',
-          type: ItemType.consumable,
-          consumableEffect: ConsumableEffect.heal,
-          scrapValue: 2,
-          description: 'Sterile bandage and coagulant stimulant (+50 HP).',
-        ),
-        const EquipmentItem(
-          id: 'c_psycho',
-          name: 'Combat Psycho Chem',
-          type: ItemType.consumable,
-          consumableEffect: ConsumableEffect.psycho,
-          scrapValue: 3,
-          description: 'Violent adrenaline surge (+6 DMG for combat).',
-        ),
-        const EquipmentItem(
-          id: 'c_stealthboy',
-          name: 'Stealthboy Cloak Unit',
-          type: ItemType.consumable,
-          consumableEffect: ConsumableEffect.stealth,
-          scrapValue: 4,
-          description: 'Reflective optical unit allowing silent bypass.',
-        ),
-        const EquipmentItem(
-          id: 'c_key',
-          name: 'Security Master Key',
-          type: ItemType.consumable,
-          consumableEffect: ConsumableEffect.key,
-          scrapValue: 2,
-          description: 'Heavy brass key opens reinforced bunker safes.',
-        ),
-      ];
+      final consumables = GameDatabase.consumables;
       return consumables[rng.nextInt(consumables.length)];
     }
   }

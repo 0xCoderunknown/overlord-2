@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+
 import '../../core/pixel_theme.dart';
 import '../../domain/models.dart';
 import '../../engine/building_generator.dart';
@@ -100,9 +101,7 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                         roomIndex: _controller.currentRoomIndex,
                         eventLog: _controller.lastEventLog,
                       ),
-                      Expanded(
-                        child: _buildBuildingViewport(),
-                      ),
+                      Expanded(child: _buildBuildingViewport()),
                     ],
                   ),
             // Salvage Loot Popup
@@ -153,7 +152,8 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                         style: PixelTheme.pixelStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: floor.floorIndex == _controller.currentFloorIndex
+                          color:
+                              floor.floorIndex == _controller.currentFloorIndex
                               ? PixelTheme.neonGreen
                               : PixelTheme.textMuted,
                         ),
@@ -163,9 +163,13 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                 ),
                 // Floor Rooms
                 ...floor.rooms.map((room) {
-                  final isActive = room.floorIndex == _controller.currentFloorIndex &&
+                  final isActive =
+                      room.floorIndex == _controller.currentFloorIndex &&
                       room.roomIndex == _controller.currentRoomIndex;
-                  final isMoveTarget = _controller.canMoveTo(room.floorIndex, room.roomIndex);
+                  final isMoveTarget = _controller.canMoveTo(
+                    room.floorIndex,
+                    room.roomIndex,
+                  );
 
                   return PixelRoomView(
                     room: room,
@@ -173,7 +177,8 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                     isMoveTarget: isMoveTarget,
                     player: _controller.player,
                     combat: _controller.activeCombat,
-                    onTapRoom: () => _controller.moveTo(room.floorIndex, room.roomIndex),
+                    onTapRoom: () =>
+                        _controller.moveTo(room.floorIndex, room.roomIndex),
                     onAttack: () => _controller.executeCombatRound(),
                     onHeal: () => _controller.useMedkit(),
                     onSearchScrap: () => _controller.searchScrapPile(),
@@ -200,7 +205,11 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.warning_amber, color: PixelTheme.alertRed, size: 48),
+            const Icon(
+              Icons.warning_amber,
+              color: PixelTheme.alertRed,
+              size: 48,
+            ),
             const SizedBox(height: 16),
             Text(
               'EXPEDITION TERMINATED',
@@ -225,7 +234,10 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: PixelTheme.alertRed,
                 shape: const RoundedRectangleBorder(),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
               onPressed: _restart,
               child: Text(
