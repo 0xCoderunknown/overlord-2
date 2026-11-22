@@ -23,7 +23,9 @@ All autonomous agents modifying or expanding this codebase **must strictly honor
    - Crisp pixel art rendering with `FilterQuality.none`.
    - Side-cutaway building rooms with distinct states: `unrevealed` (fog of war), `outline` (discovered/adjacent), `active` (team present), `cleared`.
    - CRT / retro atmospheric details preserved through theme tokens.
-3. **Git Push Protocol:**
+3. **Execution & Web Environment:**
+   - Web development and test target is strictly **Google Chrome** (`flutter run -d chrome`).
+4. **Git Push Protocol:**
    - **Never push to remote Git repositories automatically.** Only commit locally when work is verified, and push to remote ONLY when explicitly requested by the user.
 4. **Mandatory Indian Date Format (`DD-MM-YYYY`):**
    - **All dates displayed in UI, terminal logs, changelogs (`CHANGELOG.md`), and markdown documentation MUST strictly use Indian numerical date formatting (`DD-MM-YYYY` or `DD-MM-YY`).**

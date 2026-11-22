@@ -3,9 +3,8 @@ import '../../core/pixel_theme.dart';
 import '../../domain/models.dart';
 import '../../engine/building_generator.dart';
 import '../../engine/exploration_controller.dart';
-import '../widgets/building_cutaway_view.dart';
 import '../widgets/pixel_hud.dart';
-import '../widgets/room_stage_view.dart';
+import '../widgets/pixel_room_view.dart';
 import '../widgets/scrap_loot_dialog.dart';
 
 class ExpeditionScreen extends StatefulWidget {
@@ -68,9 +67,9 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
         backgroundColor: PixelTheme.roomVoid,
         elevation: 0,
         title: Text(
-          'OVERLORD 2 // SECTOR RUN',
+          'OVERLORD 2 // FACILITY INFILTRATION',
           style: PixelTheme.pixelStyle(
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.bold,
             color: PixelTheme.neonGreen,
             letterSpacing: 1.5,
@@ -79,7 +78,7 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: PixelTheme.textLight),
-            tooltip: 'Generate New Building',
+            tooltip: 'Reset Facility',
             onPressed: _restart,
           ),
         ],
@@ -101,22 +100,8 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                         roomIndex: _controller.currentRoomIndex,
                         eventLog: _controller.lastEventLog,
                       ),
-                      BuildingCutawayView(
-                        building: _controller.building,
-                        currentFloorIndex: _controller.currentFloorIndex,
-                        currentRoomIndex: _controller.currentRoomIndex,
-                        canMoveTo: _controller.canMoveTo,
-                        onRoomTap: (f, r) => _controller.moveTo(f, r),
-                      ),
                       Expanded(
-                        child: RoomStageView(
-                          room: _controller.currentRoom,
-                          player: player,
-                          combat: _controller.activeCombat,
-                          onAttack: () => _controller.executeCombatRound(),
-                          onUseMedkit: () => _controller.useMedkit(),
-                          onSearchScrap: () => _controller.searchScrapPile(),
-                        ),
+                        child: _buildBuildingViewport(),
                       ),
                     ],
                   ),
@@ -129,6 +114,74 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                 onScrap: () => _controller.scrapPendingItem(),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBuildingViewport() {
+    final reversedFloors = _controller.building.floors.reversed.toList();
+
+    return InteractiveViewer(
+      constrained: false,
+      boundaryMargin: const EdgeInsets.all(40),
+      minScale: 0.6,
+      maxScale: 2.0,
+      child: Container(
+        color: PixelTheme.roomVoid,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: reversedFloors.map((floor) {
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Floor indicator column
+                Container(
+                  width: 44,
+                  height: 170,
+                  margin: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: PixelTheme.roomUnrevealed,
+                    border: Border.all(color: PixelTheme.borderPixel),
+                  ),
+                  child: Center(
+                    child: RotatedBox(
+                      quarterTurns: 3,
+                      child: Text(
+                        'FLOOR ${floor.floorIndex + 1}',
+                        style: PixelTheme.pixelStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: floor.floorIndex == _controller.currentFloorIndex
+                              ? PixelTheme.neonGreen
+                              : PixelTheme.textMuted,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // Floor Rooms
+                ...floor.rooms.map((room) {
+                  final isActive = room.floorIndex == _controller.currentFloorIndex &&
+                      room.roomIndex == _controller.currentRoomIndex;
+                  final isMoveTarget = _controller.canMoveTo(room.floorIndex, room.roomIndex);
+
+                  return PixelRoomView(
+                    room: room,
+                    isActive: isActive,
+                    isMoveTarget: isMoveTarget,
+                    player: _controller.player,
+                    combat: _controller.activeCombat,
+                    onTapRoom: () => _controller.moveTo(room.floorIndex, room.roomIndex),
+                    onAttack: () => _controller.executeCombatRound(),
+                    onHeal: () => _controller.useMedkit(),
+                    onSearchScrap: () => _controller.searchScrapPile(),
+                  );
+                }),
+              ],
+            );
+          }).toList(),
         ),
       ),
     );
@@ -147,11 +200,7 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.warning_amber,
-              color: PixelTheme.alertRed,
-              size: 48,
-            ),
+            const Icon(Icons.warning_amber, color: PixelTheme.alertRed, size: 48),
             const SizedBox(height: 16),
             Text(
               'EXPEDITION TERMINATED',
@@ -164,7 +213,7 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Scout flatlined in Sector L${_controller.currentFloorIndex + 1}:R${_controller.currentRoomIndex + 1}.',
+              'Scout flatlined in Sector F${_controller.currentFloorIndex + 1}:R${_controller.currentRoomIndex + 1}.',
               style: PixelTheme.pixelStyle(
                 fontSize: 11,
                 color: PixelTheme.textLight,
