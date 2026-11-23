@@ -91,7 +91,7 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            player.isDead
+            (player.isDead && _controller.isDefeatScreenVisible)
                 ? _buildDefeatView()
                 : Column(
                     children: [
@@ -184,6 +184,8 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                     isScoutOnLeft: _controller.isScoutOnLeft,
                     isScoutFacingRight: _controller.isScoutFacingRight,
                     isEnemyAggroed: _controller.isEnemyAggroed,
+                    isEnemyLyingOnGround: _controller.isEnemyLyingOnGround,
+                    isHeroLyingOnGround: _controller.isHeroLyingOnGround,
                     combatBannerText: _controller.combatBannerText,
                     onTapRoom: () =>
                         _controller.moveTo(room.floorIndex, room.roomIndex),

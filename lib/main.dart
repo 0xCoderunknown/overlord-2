@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'core/pixel_theme.dart';
-import 'presentation/screens/expedition_screen.dart';
+import 'presentation/bunker/overseer_screen.dart';
 
 void main() {
   runApp(const Overlord2App());
@@ -22,7 +22,7 @@ class Overlord2App extends StatelessWidget {
           surface: PixelTheme.roomVoid,
         ),
       ),
-      home: const ExpeditionScreen(),
+      home: const OverseerScreen(),
     );
   }
 }

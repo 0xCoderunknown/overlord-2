@@ -21,6 +21,8 @@ class PixelRoomView extends StatelessWidget {
   final bool isScoutOnLeft;
   final bool isScoutFacingRight;
   final bool isEnemyAggroed;
+  final bool isEnemyLyingOnGround;
+  final bool isHeroLyingOnGround;
   final String? combatBannerText;
   final VoidCallback onTapRoom;
   final VoidCallback onAttack;
@@ -41,6 +43,8 @@ class PixelRoomView extends StatelessWidget {
     this.isScoutOnLeft = true,
     this.isScoutFacingRight = true,
     this.isEnemyAggroed = false,
+    this.isEnemyLyingOnGround = false,
+    this.isHeroLyingOnGround = false,
     this.combatBannerText,
     required this.onTapRoom,
     required this.onAttack,
@@ -276,25 +280,36 @@ class PixelRoomView extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        HitShake(
-          isHero: true,
-          isShaking: isShakingHero,
-          damagePopup: heroDamagePopup,
-          child: Transform.flip(
-            flipX: !isScoutFacingRight,
-            child: Image.asset(
-              'assets/images/hero.png',
-              height: 62,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.none,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.shield, color: PixelTheme.neonGreen, size: 36),
+        AnimatedSlide(
+          offset: Offset(0, isHeroLyingOnGround ? 0.24 : 0.0),
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeIn,
+          child: AnimatedRotation(
+            // Rotate anticlockwise (-0.25) if facing right, clockwise (0.25) if facing left
+            turns: isHeroLyingOnGround ? (isScoutFacingRight ? -0.25 : 0.25) : 0.0,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeIn,
+            child: HitShake(
+              isHero: true,
+              isShaking: isShakingHero,
+              damagePopup: heroDamagePopup,
+              child: Transform.flip(
+                flipX: !isScoutFacingRight,
+                child: Image.asset(
+                  'assets/images/hero.png',
+                  height: 62,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.none,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.shield, color: PixelTheme.neonGreen, size: 36),
+                ),
+              ),
             ),
           ),
         ),
         // Ground shadow on the walking rail
         Container(
-          width: 32,
+          width: isHeroLyingOnGround ? 54 : 32,
           height: 3,
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.7),
@@ -302,18 +317,19 @@ class PixelRoomView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 1),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-          color: PixelTheme.roomVoid.withValues(alpha: 0.9),
-          child: Text(
-            player.name.toUpperCase(),
-            style: PixelTheme.pixelStyle(
-              fontSize: 7,
-              fontWeight: FontWeight.bold,
-              color: PixelTheme.neonGreen,
+        if (!isHeroLyingOnGround)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            color: PixelTheme.roomVoid.withValues(alpha: 0.9),
+            child: Text(
+              player.name.toUpperCase(),
+              style: PixelTheme.pixelStyle(
+                fontSize: 7,
+                fontWeight: FontWeight.bold,
+                color: PixelTheme.neonGreen,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -355,6 +371,7 @@ class PixelRoomView extends StatelessWidget {
         damagePopup: enemyDamagePopup,
         facesLeft: enemyFacesLeft,
         isAggroed: isEnemyAggroed,
+        isLyingOnGround: isEnemyLyingOnGround,
       );
     }
 

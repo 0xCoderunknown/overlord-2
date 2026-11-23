@@ -358,5 +358,15 @@ void main() {
       expect(controller.currentFloorIndex, 2);
       expect(controller.currentRoomIndex, 3);
     });
+
+    test('initial death states are clean and defeat screen is gated behind death cycle', () {
+      final building = BuildingGenerator().generateBuilding(floorCount: 1, roomsPerFloor: 2, elevatorColumn: 1);
+      final player = ScoutCharacter(name: 'Vance');
+      final controller = ExplorationController(building: building, player: player);
+
+      expect(controller.isEnemyLyingOnGround, isFalse);
+      expect(controller.isHeroLyingOnGround, isFalse);
+      expect(controller.isDefeatScreenVisible, isFalse);
+    });
   });
 }
