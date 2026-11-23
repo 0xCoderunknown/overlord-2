@@ -40,7 +40,7 @@ All autonomous agents modifying or expanding this codebase **must strictly honor
 | Invariant | Concept | Rule |
 |---|---|---|
 | **Room Fog of War** | Room Discovery | Unexplored rooms stay blacked out; adjacent rooms show outlines when current room is cleared. |
-| **Tap-to-Move & Forward-Only** | Traversal | Tapping an outlined adjacent room advances the scout. Once entered, previous rooms lock. |
+| **Tap-to-Move & Cleared Backtracking** | Traversal | Tapping an outlined or cleared adjacent room advances the scout. Hostile rooms lock until cleared; cleared rooms unlock free back-and-forth traversal to reach facility elevators. |
 | **Vertical Transit** | Stairs & Elevators | Found in designated rooms; allows moving between floors (ground, upper levels, sub-basements). |
 | **Scrap Pile System** | Loot Resolution | Defeated hostiles transform into searchables scrap piles (1 drop max for grunts, jackpot for bosses). |
 | **Paid Requisition** | Loadout Economy | Unlocked high-tier weapons cost upfront Gold to deploy. High firepower balances against mission payout margins. |

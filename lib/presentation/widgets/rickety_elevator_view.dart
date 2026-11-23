@@ -5,12 +5,14 @@ import '../../domain/models.dart';
 class RicketyElevatorView extends StatelessWidget {
   final Room room;
   final bool isActive;
+  final bool isMoveTarget;
   final ScoutCharacter player;
 
   const RicketyElevatorView({
     super.key,
     required this.room,
     required this.isActive,
+    this.isMoveTarget = false,
     required this.player,
   });
 
@@ -23,8 +25,10 @@ class RicketyElevatorView extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF0C0E14),
         border: Border.all(
-          color: isActive ? PixelTheme.elevatorCyan : PixelTheme.borderPixel,
-          width: isActive ? 2 : 1,
+          color: isActive
+              ? PixelTheme.elevatorCyan
+              : (isMoveTarget ? PixelTheme.neonGreen : PixelTheme.borderPixel),
+          width: (isActive || isMoveTarget) ? 2 : 1,
         ),
       ),
       child: Stack(
@@ -96,20 +100,39 @@ class RicketyElevatorView extends StatelessWidget {
                     ),
                   ),
                 ] else ...[
-                  // Empty lift gate / shaft floor sign
+                  // Empty lift gate / shaft floor sign or board prompt
                   Container(
                     height: 44,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      border: Border.all(color: PixelTheme.borderPixel.withValues(alpha: 0.5)),
-                      color: const Color(0xFF131720).withValues(alpha: 0.7),
+                      border: Border.all(
+                        color: isMoveTarget
+                            ? PixelTheme.neonGreen
+                            : PixelTheme.borderPixel.withValues(alpha: 0.5),
+                      ),
+                      color: isMoveTarget
+                          ? PixelTheme.roomVoid.withValues(alpha: 0.85)
+                          : const Color(0xFF131720).withValues(alpha: 0.7),
                     ),
                     child: Center(
-                      child: Icon(
-                        Icons.fence,
-                        color: PixelTheme.borderPixel.withValues(alpha: 0.6),
-                        size: 20,
-                      ),
+                      child: isMoveTarget
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              color: PixelTheme.neonGreen,
+                              child: Text(
+                                'BOARD',
+                                style: PixelTheme.pixelStyle(
+                                  fontSize: 7,
+                                  fontWeight: FontWeight.bold,
+                                  color: PixelTheme.roomVoid,
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              Icons.fence,
+                              color: PixelTheme.borderPixel.withValues(alpha: 0.6),
+                              size: 20,
+                            ),
                     ),
                   ),
                 ],

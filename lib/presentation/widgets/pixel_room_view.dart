@@ -58,6 +58,7 @@ class PixelRoomView extends StatelessWidget {
         child: RicketyElevatorView(
           room: room,
           isActive: isActive,
+          isMoveTarget: isMoveTarget,
           player: player,
         ),
       );
@@ -158,99 +159,115 @@ class PixelRoomView extends StatelessWidget {
   Widget _buildRevealedRoom() {
     final isBossChamber = room.type == RoomType.bossChamber;
 
-    return Container(
-      width: roomWidth,
-      height: 190,
-      margin: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: PixelTheme.roomCleared,
-        border: Border.all(
-          color: isActive
-              ? (isBossChamber ? PixelTheme.alertRed : PixelTheme.neonGreen)
-              : PixelTheme.borderPixel,
-          width: isActive ? 2 : 1,
+    return GestureDetector(
+      onTap: isMoveTarget ? onTapRoom : null,
+      child: Container(
+        width: roomWidth,
+        height: 190,
+        margin: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: PixelTheme.roomCleared,
+          border: Border.all(
+            color: isActive
+                ? (isBossChamber ? PixelTheme.alertRed : PixelTheme.neonGreen)
+                : (isMoveTarget ? PixelTheme.neonGreen : PixelTheme.borderPixel),
+            width: (isActive || isMoveTarget) ? 2 : 1,
+          ),
         ),
-      ),
-      child: Stack(
-        children: [
-          // Flat horizontal 2D cutaway room background
-          RoomBackgroundView(
-            roomType: room.type,
-            isActive: isActive,
-            isCleared: room.state == RoomState.cleared,
-          ),
-
-          // Room Header Banner
-          Positioned(
-            top: 4,
-            left: 8,
-            right: 8,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  color: PixelTheme.roomVoid.withValues(alpha: 0.85),
-                  child: Text(
-                    isBossChamber ? 'APEX BOSS CHAMBER' : room.type.name.toUpperCase(),
-                    style: PixelTheme.pixelStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
-                      color: isBossChamber
-                          ? PixelTheme.alertRed
-                          : (isActive ? PixelTheme.neonGreen : PixelTheme.textMuted),
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  color: PixelTheme.roomVoid.withValues(alpha: 0.85),
-                  child: Text(
-                    'F${room.floorIndex + 1}:R${room.roomIndex + 1}',
-                    style: PixelTheme.pixelStyle(
-                      fontSize: 8,
-                      color: PixelTheme.textMuted,
-                    ),
-                  ),
-                ),
-              ],
+        child: Stack(
+          children: [
+            // Flat horizontal 2D cutaway room background
+            RoomBackgroundView(
+              roomType: room.type,
+              isActive: isActive,
+              isCleared: room.state == RoomState.cleared,
             ),
-          ),
 
-          // Combatants grounded on flat floor slab (bottom: 18)
-          Positioned(
-            bottom: 18,
-            left: 14,
-            right: 14,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: isScoutOnLeft
-                  ? [
-                      if (isActive) _buildScoutInRoom() else const SizedBox(width: 48),
-                      _buildRoomInteriorContent(enemyFacesLeft: true),
-                    ]
-                  : [
-                      _buildRoomInteriorContent(enemyFacesLeft: false),
-                      if (isActive) _buildScoutInRoom() else const SizedBox(width: 48),
-                    ],
-            ),
-          ),
-
-          // In-Room Auto-Combat Command Bar
-          if (isActive && (room.hasUnresolvedEnemy || combatBannerText != null))
+            // Room Header Banner
             Positioned(
-              top: 26,
-              left: 12,
-              right: 12,
-              child: InRoomCombatBar(
-                room: room,
-                player: player,
-                bannerText: combatBannerText,
-                onHeal: onHeal,
+              top: 4,
+              left: 8,
+              right: 8,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    color: PixelTheme.roomVoid.withValues(alpha: 0.85),
+                    child: Text(
+                      isBossChamber ? 'APEX BOSS CHAMBER' : room.type.name.toUpperCase(),
+                      style: PixelTheme.pixelStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: isBossChamber
+                            ? PixelTheme.alertRed
+                            : (isActive || isMoveTarget ? PixelTheme.neonGreen : PixelTheme.textMuted),
+                      ),
+                    ),
+                  ),
+                  if (isMoveTarget && !isActive)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      color: PixelTheme.neonGreen,
+                      child: Text(
+                        'RETURN',
+                        style: PixelTheme.pixelStyle(
+                          fontSize: 7,
+                          fontWeight: FontWeight.bold,
+                          color: PixelTheme.roomVoid,
+                        ),
+                      ),
+                    ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    color: PixelTheme.roomVoid.withValues(alpha: 0.85),
+                    child: Text(
+                      'F${room.floorIndex + 1}:R${room.roomIndex + 1}',
+                      style: PixelTheme.pixelStyle(
+                        fontSize: 8,
+                        color: PixelTheme.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-        ],
+
+            // Combatants grounded on flat floor slab (bottom: 18)
+            Positioned(
+              bottom: 18,
+              left: 14,
+              right: 14,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: isScoutOnLeft
+                    ? [
+                        if (isActive) _buildScoutInRoom() else const SizedBox(width: 48),
+                        _buildRoomInteriorContent(enemyFacesLeft: true),
+                      ]
+                    : [
+                        _buildRoomInteriorContent(enemyFacesLeft: false),
+                        if (isActive) _buildScoutInRoom() else const SizedBox(width: 48),
+                      ],
+              ),
+            ),
+
+            // In-Room Auto-Combat Command Bar
+            if (isActive && (room.hasUnresolvedEnemy || combatBannerText != null))
+              Positioned(
+                top: 26,
+                left: 12,
+                right: 12,
+                child: InRoomCombatBar(
+                  room: room,
+                  player: player,
+                  bannerText: combatBannerText,
+                  onHeal: onHeal,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

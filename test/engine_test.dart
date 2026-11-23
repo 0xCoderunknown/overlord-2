@@ -297,5 +297,66 @@ void main() {
       expect(controller.isScoutOnLeft, isFalse);
       expect(controller.isScoutFacingRight, isFalse);
     });
+
+    test('backtracking through cleared rooms allows returning to elevator and ascending floors', () {
+      final generator = BuildingGenerator(random: Random(42));
+      final building = generator.generateBuilding(
+        floorCount: 3,
+        roomsPerFloor: 4,
+        elevatorColumn: 3,
+      );
+      final player = ScoutCharacter(name: 'Vance', maxHp: 100);
+      player.equippedWeapon = const EquipmentItem(
+        id: 'w_test_cannon',
+        name: 'Test Heavy Blaster',
+        type: ItemType.weapon,
+        minStat: 500,
+        maxStat: 500,
+      );
+      final controller = ExplorationController(building: building, player: player);
+
+      void moveAndClear(int floor, int room) {
+        expect(controller.moveTo(floor, room), isTrue);
+        if (controller.currentRoom.hasUnresolvedEnemy) {
+          controller.executeCombatRound();
+          expect(controller.currentRoom.hasUnresolvedEnemy, isFalse);
+        }
+      }
+
+      // Floor 1: Move right through rooms 0 -> 1 -> 2 -> 3 (Elevator)
+      moveAndClear(0, 1);
+      moveAndClear(0, 2);
+      moveAndClear(0, 3);
+      expect(controller.currentRoom.isElevator, isTrue);
+
+      // Take elevator up to Floor 2 (floorIndex 1)
+      expect(controller.canMoveTo(1, 3), isTrue);
+      moveAndClear(1, 3);
+      expect(controller.currentFloorIndex, 1);
+      expect(controller.currentRoomIndex, 3);
+
+      // Floor 2: Move left through rooms 3 -> 2 -> 1 -> 0, clearing any hostiles
+      moveAndClear(1, 2);
+      moveAndClear(1, 1);
+      moveAndClear(1, 0);
+      expect(controller.currentRoomIndex, 0);
+
+      // At dead-end Room 0: verify player can freely backtrack through cleared rooms
+      expect(controller.canMoveTo(1, 1), isTrue, reason: 'Cleared Room 1 must allow backtracking');
+      expect(controller.moveTo(1, 1), isTrue);
+
+      expect(controller.canMoveTo(1, 2), isTrue, reason: 'Cleared Room 2 must allow backtracking');
+      expect(controller.moveTo(1, 2), isTrue);
+
+      expect(controller.canMoveTo(1, 3), isTrue, reason: 'Cleared Elevator must allow backtracking');
+      expect(controller.moveTo(1, 3), isTrue);
+      expect(controller.currentRoom.isElevator, isTrue);
+
+      // Now back at Floor 2 Elevator: verify elevator can ascend to Floor 3 (floorIndex 2)
+      expect(controller.canMoveTo(2, 3), isTrue, reason: 'Elevator must allow ascension to Floor 3');
+      expect(controller.moveTo(2, 3), isTrue);
+      expect(controller.currentFloorIndex, 2);
+      expect(controller.currentRoomIndex, 3);
+    });
   });
 }

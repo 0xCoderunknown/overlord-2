@@ -25,6 +25,10 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
   - Victory banner persists for 1.8s then fades out while the stash remains interactive.
 
 ### 🧭 Stance, Facing Direction & Traversal Orientation
+- **Cleared Room Backtracking & Elevator Return:**
+  - Resolved deadlock where reaching dead-end rooms on upper floors trapped the scout due to missing touch handling on cleared rooms.
+  - Cleared sectors now unlock responsive tap-to-return navigation with glowing borders and `[RETURN]` header prompts.
+  - Elevator shafts display interactive `[BOARD]` prompts when adjacent or vertically aligned, enabling full return transit to ascend/descend floors.
 - **Dynamic 1v1 Facing Correction:**
   - Fixed orientation bug where the scout would face away from enemies on certain floors or backtracking routes.
   - Added entry-door tracking in `ExplorationController`:
@@ -42,7 +46,7 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
   - Created detailed `README.md` covering game manifesto, architecture topology, lore, controls, and offline pledge.
 - **Directional Unit Tests:**
   - Added test coverage in `test/engine_test.dart` for scout orientation and stance flipping across traversal directions.
-  - 100% test pass rate (10/10 unit & widget tests).
+  - 100% test pass rate (11/11 unit & widget tests).
 
 ---
 
