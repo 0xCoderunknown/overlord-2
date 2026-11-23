@@ -177,9 +177,15 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                     isMoveTarget: isMoveTarget,
                     player: _controller.player,
                     combat: _controller.activeCombat,
+                    isShakingHero: _controller.isShakingHero,
+                    isShakingEnemy: _controller.isShakingEnemy,
+                    heroDamagePopup: _controller.heroDamagePopup,
+                    enemyDamagePopup: _controller.enemyDamagePopup,
+                    isAutoCombatActive: _controller.isAutoCombatActive,
                     onTapRoom: () =>
                         _controller.moveTo(room.floorIndex, room.roomIndex),
                     onAttack: () => _controller.executeCombatRound(),
+                    onToggleAutoCombat: () => _controller.toggleAutoCombat(),
                     onHeal: () => _controller.useMedkit(),
                     onSearchScrap: () => _controller.searchScrapPile(),
                   );

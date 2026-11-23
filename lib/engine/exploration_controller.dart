@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import '../domain/models.dart';
 import 'building_generator.dart';
@@ -14,6 +15,15 @@ class ExplorationController extends ChangeNotifier {
   CombatEngine? activeCombat;
   EquipmentItem? pendingScrapItem;
   String? lastEventLog;
+
+  // Auto-Battler & Combat Animation State
+  bool isAutoCombatActive = false;
+  bool isShakingHero = false;
+  bool isShakingEnemy = false;
+  String? heroDamagePopup;
+  String? enemyDamagePopup;
+  bool _isProcessingRound = false;
+  bool _disposed = false;
 
   ExplorationController({
     required this.building,
@@ -84,8 +94,10 @@ class ExplorationController extends ChangeNotifier {
       } else {
         lastEventLog = 'Hostile ${enemy.name} engaged! ${enemy.description}';
       }
+      startAutoCombat();
     } else {
       activeCombat = null;
+      isAutoCombatActive = false;
       if (currentRoom.hasUnsearchedScrap) {
         lastEventLog = 'A salvageable Scrap Pile lies in the room.';
       } else if (currentRoom.isElevator) {
@@ -134,6 +146,94 @@ class ExplorationController extends ChangeNotifier {
     }
   }
 
+  // --------------------------------------------------------------------------
+  // AUTO-BATTLER ENGINE & CADENCE (~2.2s per turn: 400ms strike + 400ms counter + 1.4s pause)
+  // --------------------------------------------------------------------------
+  void startAutoCombat() {
+    if (activeCombat == null || activeCombat!.status != CombatStatus.inProgress) return;
+    if (isAutoCombatActive) return;
+    isAutoCombatActive = true;
+    _runAutoCombatLoop();
+    notifyListeners();
+  }
+
+  void pauseAutoCombat() {
+    isAutoCombatActive = false;
+    notifyListeners();
+  }
+
+  void toggleAutoCombat() {
+    if (isAutoCombatActive) {
+      pauseAutoCombat();
+    } else {
+      startAutoCombat();
+    }
+  }
+
+  Future<void> _runAutoCombatLoop() async {
+    while (!_disposed &&
+        isAutoCombatActive &&
+        activeCombat != null &&
+        activeCombat!.status == CombatStatus.inProgress) {
+      if (_isProcessingRound) return;
+      _isProcessingRound = true;
+
+      // Phase 1: Player strikes (400ms)
+      final pDmg = activeCombat!.executePlayerStrike();
+      isShakingEnemy = true;
+      enemyDamagePopup = '-$pDmg';
+      notifyListeners();
+
+      await Future.delayed(const Duration(milliseconds: 400));
+      if (_disposed) return;
+      isShakingEnemy = false;
+      notifyListeners();
+
+      // Check if enemy died
+      if (activeCombat!.enemy.isDead) {
+        _isProcessingRound = false;
+        _handleCombatVictory(pDmg);
+        return;
+      }
+
+      // Phase 2: Enemy retaliates (400ms)
+      final result = activeCombat!.executeEnemyStrike(pDmg);
+      lastEventLog = result.narrative;
+      if (result.enemyDamageDealt > 0) {
+        isShakingHero = true;
+        heroDamagePopup = '-${result.enemyDamageDealt}';
+        notifyListeners();
+      }
+
+      await Future.delayed(const Duration(milliseconds: 400));
+      if (_disposed) return;
+      isShakingHero = false;
+      notifyListeners();
+
+      if (result.status == CombatStatus.defeat) {
+        _isProcessingRound = false;
+        isAutoCombatActive = false;
+        notifyListeners();
+        return;
+      }
+
+      // Phase 3: Tactical pause / Decision window (~1400ms)
+      _isProcessingRound = false;
+      await Future.delayed(const Duration(milliseconds: 1400));
+    }
+  }
+
+  void _handleCombatVictory(int pDmg) {
+    isAutoCombatActive = false;
+    currentRoom.scrapPile = generator.generateScrapPile(currentFloorIndex);
+    currentRoom.state = RoomState.cleared;
+    _revealAdjacentRooms(currentFloorIndex, currentRoomIndex);
+    lastEventLog =
+        '${player.name} struck for $pDmg DMG! Target eliminated! Defeated enemy collapsed into a Scrap Pile.';
+    notifyListeners();
+  }
+
+  /// Synchronous manual round fallback (e.g. for unit testing or instant strike)
   void executeCombatRound() {
     if (activeCombat == null) return;
 
@@ -141,11 +241,7 @@ class ExplorationController extends ChangeNotifier {
     lastEventLog = result.narrative;
 
     if (result.status == CombatStatus.victory) {
-      // Enemy defeated -> spawns a scrap pile in the room
-      currentRoom.scrapPile = generator.generateScrapPile(currentFloorIndex);
-      currentRoom.state = RoomState.cleared;
-      _revealAdjacentRooms(currentFloorIndex, currentRoomIndex);
-      lastEventLog = '${result.narrative} The defeated enemy collapsed into a Scrap Pile!';
+      _handleCombatVictory(result.playerDamageDealt);
     }
 
     notifyListeners();
@@ -186,7 +282,7 @@ class ExplorationController extends ChangeNotifier {
       switch (item.consumableEffect) {
         case ConsumableEffect.heal:
           player.medkits++;
-          lastEventLog = 'Stowed Medkit (+50 HP) in backpack.';
+          lastEventLog = 'Acquired Wasteland Trauma Medkit.';
           break;
         case ConsumableEffect.psycho:
           player.psychoActive = true;
@@ -219,11 +315,12 @@ class ExplorationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Emergency Medkit: Strictly restricted to <= 25% HP
   void useMedkit() {
-    if (player.medkits <= 0 || player.currentHp >= player.maxHp) return;
+    if (!player.canEmergencyHeal) return;
     player.medkits--;
     player.heal(50);
-    lastEventLog = '${player.name} used Medkit (+50 HP).';
+    lastEventLog = 'EMERGENCY MEDKIT: ${player.name} restored +50 HP!';
     notifyListeners();
   }
 
@@ -232,5 +329,12 @@ class ExplorationController extends ChangeNotifier {
     player.psychoActive = true;
     lastEventLog = 'Injected Combat Psycho (+6 DMG).';
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    isAutoCombatActive = false;
+    super.dispose();
   }
 }

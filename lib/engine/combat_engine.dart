@@ -51,34 +51,39 @@ class CombatEngine {
         status: status,
       );
     }
+    final pDmg = executePlayerStrike();
+    return executeEnemyStrike(pDmg);
+  }
 
-    // 1. Player attacks
+  /// 1. Player strikes the enemy
+  int executePlayerStrike() {
+    if (status != CombatStatus.inProgress) return 0;
     final pDmg = player.rollDamage(rng);
     enemy.currentHp = max(0, enemy.currentHp - pDmg);
 
     if (enemy.isDead) {
-      // Award bounty gold on kill
       player.gold += enemy.bountyGold;
-      final psychoNote = player.psychoActive ? ' (Psycho boost expired)' : '';
       player.psychoActive = false;
+    }
+    return pDmg;
+  }
 
-      final narrative =
-          '${player.name} struck ${enemy.name} for $pDmg DMG! Target eliminated! Bounty +${enemy.bountyGold} Gold awarded.$psychoNote';
-
+  /// 2. Enemy retaliates if alive
+  CombatRoundResult executeEnemyStrike(int pDmg) {
+    if (enemy.isDead) {
       return CombatRoundResult(
         playerDamageDealt: pDmg,
         enemyDamageDealt: 0,
         damageAbsorbedByArmor: 0,
-        narrative: narrative,
+        narrative:
+            '${player.name} struck ${enemy.name} for $pDmg DMG! Target eliminated! Bounty +${enemy.bountyGold} Gold awarded.',
         status: CombatStatus.victory,
       );
     }
 
-    // 2. Enemy counter-attacks (Armor DR absorbs damage)
     final rawEnemyDmg = enemy.rollDamage(rng);
     final armorDR = player.rollArmorReduction(rng);
     final netDmg = max(0, rawEnemyDmg - armorDR);
-
     player.currentHp = max(0, player.currentHp - netDmg);
 
     if (player.isDead) {
@@ -103,7 +108,7 @@ class CombatEngine {
   }
 
   bool useMedkit() {
-    if (player.medkits <= 0 || player.currentHp >= player.maxHp) {
+    if (!player.canEmergencyHeal) {
       return false;
     }
     player.medkits--;

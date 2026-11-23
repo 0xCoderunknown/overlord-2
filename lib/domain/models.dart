@@ -157,6 +157,10 @@ class ScoutCharacter {
 
   bool get isDead => currentHp <= 0;
 
+  /// Emergency heal is strictly restricted to critical situations (HP <= 25%).
+  bool get canEmergencyHeal =>
+      medkits > 0 && currentHp <= (maxHp * 0.25).ceil();
+
   int rollDamage(Random rng) {
     final base = equippedWeapon.minStat +
         rng.nextInt(max(1, equippedWeapon.maxStat - equippedWeapon.minStat + 1));

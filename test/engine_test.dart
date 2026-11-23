@@ -196,5 +196,49 @@ void main() {
       controller.moveTo(0, 1);
       expect(controller.lastEventLog, 'The radiation meter is clicking rhythmically.');
     });
+
+    test('emergency heal is strictly locked until HP drops to 25% or lower', () {
+      final building = Building(
+        id: 'b1',
+        name: 'Test',
+        floors: [
+          Floor(
+            floorIndex: 0,
+            rooms: [
+              Room(
+                floorIndex: 0,
+                roomIndex: 0,
+                type: RoomType.entrance,
+                contentType: ContentType.empty,
+                state: RoomState.active,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final player = ScoutCharacter(name: 'Vance', maxHp: 100, medkits: 1);
+      final controller = ExplorationController(building: building, player: player);
+
+      // At 100 HP (> 25%), heal is locked
+      expect(player.canEmergencyHeal, isFalse);
+      controller.useMedkit();
+      expect(player.medkits, 1);
+      expect(player.currentHp, 100);
+
+      // At 26 HP (> 25%), heal is still locked
+      player.currentHp = 26;
+      expect(player.canEmergencyHeal, isFalse);
+      controller.useMedkit();
+      expect(player.medkits, 1);
+      expect(player.currentHp, 26);
+
+      // At 25 HP (<= 25%), emergency heal is unlocked
+      player.currentHp = 25;
+      expect(player.canEmergencyHeal, isTrue);
+      controller.useMedkit();
+      expect(player.medkits, 0);
+      expect(player.currentHp, 75); // 25 + 50
+    });
   });
 }

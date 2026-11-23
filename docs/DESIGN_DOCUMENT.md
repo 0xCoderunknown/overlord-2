@@ -77,7 +77,10 @@
 - [x] 2D Cross-Section Building Renderer (Fog of war, room outlines, team marker)
 - [x] Tap-to-Move squad navigation engine
 - [x] Modular 1v1 combat foundation
-- [ ] Scrap Piles upon enemy defeat & Key Economy (T1-T3 Safes)
+- [x] Scrap Piles upon enemy defeat & Key Economy (T1-T3 Safes)
+- [x] 2D pixel-art cutaway rooms & narrow rickety elevator shaft
+- [x] Auto-battler loop with turn cadence, hit recoil, and floating damage numbers
+- [x] Tactical survival emergency heal gating (<=25% HP only)
 - [ ] In-run weapon upgrade kits & forward-only room locks
 - [ ] Contract Selection Board (1 of 3 missions) & Paid Loadout Requisition
 
