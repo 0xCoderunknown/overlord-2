@@ -12,6 +12,9 @@ class ExplorationController extends ChangeNotifier {
   int currentFloorIndex;
   int currentRoomIndex;
 
+  bool isScoutOnLeft = true;
+  bool get isScoutFacingRight => isScoutOnLeft;
+
   CombatEngine? activeCombat;
   EquipmentItem? pendingScrapItem;
   String? lastEventLog;
@@ -20,6 +23,8 @@ class ExplorationController extends ChangeNotifier {
   bool isAutoCombatActive = false;
   bool isShakingHero = false;
   bool isShakingEnemy = false;
+  bool isEnemyAggroed = false;
+  String? combatBannerText;
   String? heroDamagePopup;
   String? enemyDamagePopup;
   bool _isProcessingRound = false;
@@ -72,12 +77,24 @@ class ExplorationController extends ChangeNotifier {
     if (!canMoveTo(targetFloor, targetRoom)) return false;
 
     // Previous room locked as cleared
+    final prevFloor = currentFloorIndex;
+    final prevRoom = currentRoomIndex;
     currentRoom.state = RoomState.cleared;
 
     // Advance
     currentFloorIndex = targetFloor;
     currentRoomIndex = targetRoom;
     currentRoom.state = RoomState.active;
+
+    // Calculate scout stance orientation and entry door
+    if (targetFloor == prevFloor) {
+      // Horizontal traversal: moving right enters on left, moving left enters on right
+      isScoutOnLeft = targetRoom > prevRoom;
+    } else {
+      // Vertical traversal (elevator): entering floor from elevator
+      // If elevator is on the right of the floor (higher room index), scout enters to the left
+      isScoutOnLeft = targetRoom == 0;
+    }
 
     _revealAdjacentRooms(currentFloorIndex, currentRoomIndex);
 
@@ -171,6 +188,16 @@ class ExplorationController extends ChangeNotifier {
   }
 
   Future<void> _runAutoCombatLoop() async {
+    // 1. Alert Standoff: Enemy recognizes player and steps forward
+    combatBannerText = 'COMBAT STARTED';
+    isEnemyAggroed = true;
+    notifyListeners();
+
+    await Future.delayed(const Duration(milliseconds: 1000));
+    if (_disposed || activeCombat == null || activeCombat!.status != CombatStatus.inProgress) {
+      return;
+    }
+
     while (!_disposed &&
         isAutoCombatActive &&
         activeCombat != null &&
@@ -178,8 +205,25 @@ class ExplorationController extends ChangeNotifier {
       if (_isProcessingRound) return;
       _isProcessingRound = true;
 
-      // Phase 1: Player strikes (400ms)
+      // Phase 1: Player's Turn Announcement (1 second before striking)
+      combatBannerText = "PLAYER'S TURN";
+      notifyListeners();
+
+      await Future.delayed(const Duration(milliseconds: 1000));
+      if (_disposed || activeCombat == null || activeCombat!.status != CombatStatus.inProgress) {
+        _isProcessingRound = false;
+        return;
+      }
+
       final pDmg = activeCombat!.executePlayerStrike();
+
+      // Check if enemy died - immediate 0-delay announcement and stash spawn
+      if (activeCombat!.enemy.isDead) {
+        _isProcessingRound = false;
+        await _handleCombatVictory(pDmg);
+        return;
+      }
+
       isShakingEnemy = true;
       enemyDamagePopup = '-$pDmg';
       notifyListeners();
@@ -189,14 +233,24 @@ class ExplorationController extends ChangeNotifier {
       isShakingEnemy = false;
       notifyListeners();
 
-      // Check if enemy died
-      if (activeCombat!.enemy.isDead) {
+      // 3-second tactical gap before Enemy's turn
+      _isProcessingRound = false;
+      await Future.delayed(const Duration(seconds: 3));
+      if (_disposed || activeCombat == null || activeCombat!.status != CombatStatus.inProgress) {
+        return;
+      }
+      _isProcessingRound = true;
+
+      // Phase 2: Enemy's Turn Announcement (1 second before striking)
+      combatBannerText = "ENEMY'S TURN";
+      notifyListeners();
+
+      await Future.delayed(const Duration(milliseconds: 1000));
+      if (_disposed || activeCombat == null || activeCombat!.status != CombatStatus.inProgress) {
         _isProcessingRound = false;
-        _handleCombatVictory(pDmg);
         return;
       }
 
-      // Phase 2: Enemy retaliates (400ms)
       final result = activeCombat!.executeEnemyStrike(pDmg);
       lastEventLog = result.narrative;
       if (result.enemyDamageDealt > 0) {
@@ -213,23 +267,35 @@ class ExplorationController extends ChangeNotifier {
       if (result.status == CombatStatus.defeat) {
         _isProcessingRound = false;
         isAutoCombatActive = false;
+        combatBannerText = 'SCOUT FLATLINED';
         notifyListeners();
         return;
       }
 
-      // Phase 3: Tactical pause / Decision window (~1400ms)
+      // 3-second tactical gap before Player's next turn
       _isProcessingRound = false;
-      await Future.delayed(const Duration(milliseconds: 1400));
+      await Future.delayed(const Duration(seconds: 3));
     }
   }
 
-  void _handleCombatVictory(int pDmg) {
+  Future<void> _handleCombatVictory(int pDmg) async {
     isAutoCombatActive = false;
+    combatBannerText = 'ENEMY DEFEATED';
+    isEnemyAggroed = false;
+    isShakingEnemy = false;
+    // 0 delay: stash appears immediately in enemy's place
     currentRoom.scrapPile = generator.generateScrapPile(currentFloorIndex);
     currentRoom.state = RoomState.cleared;
     _revealAdjacentRooms(currentFloorIndex, currentRoomIndex);
     lastEventLog =
         '${player.name} struck for $pDmg DMG! Target eliminated! Defeated enemy collapsed into a Scrap Pile.';
+    notifyListeners();
+
+    // 1.5 - 2 second conclusion message before clearing banner
+    await Future.delayed(const Duration(milliseconds: 1800));
+    if (_disposed) return;
+
+    combatBannerText = null;
     notifyListeners();
   }
 

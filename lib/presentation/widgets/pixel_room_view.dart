@@ -18,10 +18,12 @@ class PixelRoomView extends StatelessWidget {
   final bool isShakingEnemy;
   final String? heroDamagePopup;
   final String? enemyDamagePopup;
-  final bool isAutoCombatActive;
+  final bool isScoutOnLeft;
+  final bool isScoutFacingRight;
+  final bool isEnemyAggroed;
+  final String? combatBannerText;
   final VoidCallback onTapRoom;
   final VoidCallback onAttack;
-  final VoidCallback onToggleAutoCombat;
   final VoidCallback onHeal;
   final VoidCallback onSearchScrap;
 
@@ -36,17 +38,17 @@ class PixelRoomView extends StatelessWidget {
     this.isShakingEnemy = false,
     this.heroDamagePopup,
     this.enemyDamagePopup,
-    this.isAutoCombatActive = false,
+    this.isScoutOnLeft = true,
+    this.isScoutFacingRight = true,
+    this.isEnemyAggroed = false,
+    this.combatBannerText,
     required this.onTapRoom,
     required this.onAttack,
-    this.onToggleAutoCombat = _defaultVoid,
     required this.onHeal,
     required this.onSearchScrap,
   });
 
-  static void _defaultVoid() {}
-
-  double get roomWidth => room.isElevator ? 100 : 260;
+  double get roomWidth => room.isElevator ? 100 : 290;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +75,7 @@ class PixelRoomView extends StatelessWidget {
   Widget _buildUnrevealedRoom() {
     return Container(
       width: roomWidth,
-      height: 170,
+      height: 190,
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: PixelTheme.roomVoid,
@@ -115,7 +117,7 @@ class PixelRoomView extends StatelessWidget {
       onTap: isMoveTarget ? onTapRoom : null,
       child: Container(
         width: roomWidth,
-        height: 170,
+        height: 190,
         margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: PixelTheme.roomUnrevealed,
@@ -158,7 +160,7 @@ class PixelRoomView extends StatelessWidget {
 
     return Container(
       width: roomWidth,
-      height: 170,
+      height: 190,
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: PixelTheme.roomCleared,
@@ -223,15 +225,20 @@ class PixelRoomView extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                if (isActive) _buildScoutInRoom() else const SizedBox(width: 48),
-                _buildRoomInteriorContent(),
-              ],
+              children: isScoutOnLeft
+                  ? [
+                      if (isActive) _buildScoutInRoom() else const SizedBox(width: 48),
+                      _buildRoomInteriorContent(enemyFacesLeft: true),
+                    ]
+                  : [
+                      _buildRoomInteriorContent(enemyFacesLeft: false),
+                      if (isActive) _buildScoutInRoom() else const SizedBox(width: 48),
+                    ],
             ),
           ),
 
           // In-Room Auto-Combat Command Bar
-          if (isActive && room.hasUnresolvedEnemy)
+          if (isActive && (room.hasUnresolvedEnemy || combatBannerText != null))
             Positioned(
               top: 26,
               left: 12,
@@ -239,8 +246,7 @@ class PixelRoomView extends StatelessWidget {
               child: InRoomCombatBar(
                 room: room,
                 player: player,
-                isAutoCombatActive: isAutoCombatActive,
-                onToggleAutoCombat: onToggleAutoCombat,
+                bannerText: combatBannerText,
                 onHeal: onHeal,
               ),
             ),
@@ -257,13 +263,16 @@ class PixelRoomView extends StatelessWidget {
           isHero: true,
           isShaking: isShakingHero,
           damagePopup: heroDamagePopup,
-          child: Image.asset(
-            'assets/images/hero.png',
-            height: 62,
-            fit: BoxFit.contain,
-            filterQuality: FilterQuality.none,
-            errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.shield, color: PixelTheme.neonGreen, size: 36),
+          child: Transform.flip(
+            flipX: !isScoutFacingRight,
+            child: Image.asset(
+              'assets/images/hero.png',
+              height: 62,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.none,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.shield, color: PixelTheme.neonGreen, size: 36),
+            ),
           ),
         ),
         // Ground shadow on the walking rail
@@ -292,15 +301,7 @@ class PixelRoomView extends StatelessWidget {
     );
   }
 
-  Widget _buildRoomInteriorContent() {
-    if (room.hasUnresolvedEnemy) {
-      return RoomEnemyView(
-        enemy: room.enemy!,
-        isShaking: isShakingEnemy,
-        damagePopup: enemyDamagePopup,
-      );
-    }
-
+  Widget _buildRoomInteriorContent({bool enemyFacesLeft = true}) {
     if (room.scrapPile != null) {
       final scrap = room.scrapPile!;
       return GestureDetector(
@@ -327,6 +328,16 @@ class PixelRoomView extends StatelessWidget {
             ),
           ],
         ),
+      );
+    }
+
+    if (room.hasUnresolvedEnemy) {
+      return RoomEnemyView(
+        enemy: room.enemy!,
+        isShaking: isShakingEnemy,
+        damagePopup: enemyDamagePopup,
+        facesLeft: enemyFacesLeft,
+        isAggroed: isEnemyAggroed,
       );
     }
 

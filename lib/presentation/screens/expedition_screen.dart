@@ -138,7 +138,7 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                 // Floor indicator column
                 Container(
                   width: 44,
-                  height: 170,
+                  height: 190,
                   margin: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: PixelTheme.roomUnrevealed,
@@ -181,11 +181,13 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                     isShakingEnemy: _controller.isShakingEnemy,
                     heroDamagePopup: _controller.heroDamagePopup,
                     enemyDamagePopup: _controller.enemyDamagePopup,
-                    isAutoCombatActive: _controller.isAutoCombatActive,
+                    isScoutOnLeft: _controller.isScoutOnLeft,
+                    isScoutFacingRight: _controller.isScoutFacingRight,
+                    isEnemyAggroed: _controller.isEnemyAggroed,
+                    combatBannerText: _controller.combatBannerText,
                     onTapRoom: () =>
                         _controller.moveTo(room.floorIndex, room.roomIndex),
                     onAttack: () => _controller.executeCombatRound(),
-                    onToggleAutoCombat: () => _controller.toggleAutoCombat(),
                     onHeal: () => _controller.useMedkit(),
                     onSearchScrap: () => _controller.searchScrapPile(),
                   );

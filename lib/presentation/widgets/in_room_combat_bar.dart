@@ -5,16 +5,14 @@ import '../../domain/models.dart';
 class InRoomCombatBar extends StatelessWidget {
   final Room room;
   final ScoutCharacter player;
-  final bool isAutoCombatActive;
-  final VoidCallback onToggleAutoCombat;
+  final String? bannerText;
   final VoidCallback onHeal;
 
   const InRoomCombatBar({
     super.key,
     required this.room,
     required this.player,
-    required this.isAutoCombatActive,
-    required this.onToggleAutoCombat,
+    this.bannerText,
     required this.onHeal,
   });
 
@@ -22,66 +20,71 @@ class InRoomCombatBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isBoss = room.enemy?.isBoss == true;
     final canHeal = player.canEmergencyHeal;
+    final isDefeated = bannerText == 'ENEMY DEFEATED';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-      decoration: BoxDecoration(
-        color: PixelTheme.roomVoid.withValues(alpha: 0.92),
-        border: Border.all(
-          color: isBoss ? PixelTheme.warningAmber : PixelTheme.alertRed,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+    final text = bannerText ?? (isBoss ? 'APEX DUEL IN PROGRESS' : '1V1 DUEL IN PROGRESS');
+    final formattedText = text.startsWith('[') ? text : '[$text]';
+    final statusColor = isDefeated
+        ? PixelTheme.neonGreen
+        : (isBoss ? PixelTheme.warningAmber : PixelTheme.alertRed);
+
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Auto-Battler Status / Pause Button
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isAutoCombatActive ? PixelTheme.alertRed : PixelTheme.roomUnrevealed,
-              shape: const RoundedRectangleBorder(),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            ),
-            onPressed: onToggleAutoCombat,
-            icon: Icon(
-              isAutoCombatActive ? Icons.pause : Icons.play_arrow,
-              size: 12,
-              color: isAutoCombatActive ? PixelTheme.roomVoid : PixelTheme.neonGreen,
-            ),
-            label: Text(
-              isAutoCombatActive ? 'AUTO-BATTLING' : 'PAUSED (RESUME)',
-              style: PixelTheme.pixelStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.bold,
-                color: isAutoCombatActive ? PixelTheme.roomVoid : PixelTheme.neonGreen,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: PixelTheme.roomVoid.withValues(alpha: 0.95),
+              border: Border.all(
+                color: statusColor,
+                width: 1,
               ),
             ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isDefeated ? Icons.check : Icons.flash_on,
+                  size: 11,
+                  color: statusColor,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  formattedText,
+                  style: PixelTheme.pixelStyle(
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                    color: statusColor,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: 8),
-
-          // Emergency Heal Button: Only active when HP <= 25%
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: canHeal ? PixelTheme.warningAmber : PixelTheme.borderPixel.withValues(alpha: 0.3),
-              shape: const RoundedRectangleBorder(),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            ),
-            onPressed: canHeal ? onHeal : null,
-            icon: Icon(
-              Icons.medication,
-              size: 12,
-              color: canHeal ? PixelTheme.roomVoid : PixelTheme.textMuted,
-            ),
-            label: Text(
-              canHeal
-                  ? 'EMERGENCY HEAL (+50)'
-                  : (player.medkits > 0 ? 'HEAL LOCKED (<=25% HP)' : 'NO MEDS (0)'),
-              style: PixelTheme.pixelStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.bold,
-                color: canHeal ? PixelTheme.roomVoid : PixelTheme.textMuted,
+          if (canHeal) ...[
+            const SizedBox(height: 3),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: PixelTheme.warningAmber,
+                shape: const RoundedRectangleBorder(),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                elevation: 4,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: onHeal,
+              icon: const Icon(Icons.medication, size: 10, color: PixelTheme.roomVoid),
+              label: Text(
+                'EMERGENCY HEAL (+50 HP)',
+                style: PixelTheme.pixelStyle(
+                  fontSize: 7,
+                  fontWeight: FontWeight.bold,
+                  color: PixelTheme.roomVoid,
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

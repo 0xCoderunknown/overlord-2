@@ -6,6 +6,46 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
 
 ---
 
+## [0.0.2] - 23-11-2026
+
+### ⚔️ Combat Cadence, Aggro Animation & Dynamic Turn Flow
+- **Pre-Strike Turn Anticipation (1-Second Delay):**
+  - Combat announcements now precede attacks by 1.0s (`[PLAYER'S TURN]` $\rightarrow$ wait 1s $\rightarrow$ strike $\rightarrow$ wait 3s $\rightarrow$ `[ENEMY'S TURN]` $\rightarrow$ wait 1s $\rightarrow$ counter-strike).
+  - Prevents hyper-fast auto-resolution and gives players clear combat readability.
+- **Animated Hostile Aggro Step:**
+  - Enemies recognize player entry into the room by smoothly stepping 12–15px towards the scout using `AnimatedSlide` with easing curves.
+- **Dynamic Combat Status Banner (`InRoomCombatBar`):**
+  - Sequenced status pill: `[COMBAT STARTED]` $\rightarrow$ `[PLAYER'S TURN]` $\rightarrow$ `[ENEMY'S TURN]` $\rightarrow$ `[ENEMY DEFEATED]`.
+  - Color-coded borders: `alertRed` for active hostile turns, `neonGreen` on victory conclusion.
+- **Mandatory Auto-Battler Mode:**
+  - Removed manual pause/resume buttons from room interiors; combat is streamlined into a mandatory 1v1 auto-exchange loop.
+- **Zero-Delay Defeat & Instant Stash Replacement:**
+  - Hostiles vanishing instantly with 0 delay upon fatal blow.
+  - Searchable `[SCRAP PILE]` stash immediately spawns in place of the defeated enemy.
+  - Victory banner persists for 1.8s then fades out while the stash remains interactive.
+
+### 🧭 Stance, Facing Direction & Traversal Orientation
+- **Dynamic 1v1 Facing Correction:**
+  - Fixed orientation bug where the scout would face away from enemies on certain floors or backtracking routes.
+  - Added entry-door tracking in `ExplorationController`:
+    - Entering from the left: Scout positions on the left and faces right (`flipX: false`); Enemy positions on the right and faces left (`flipX: true`).
+    - Entering from the right: Scout positions on the right and faces left (`flipX: true`); Enemy positions on the left and faces right (`flipX: false`).
+  - Elevator shaft alignment: Scout inside narrow elevator shaft consistently faces inward toward the facility floor.
+
+### 📐 Viewport Optimization & RenderFlex Fixes
+- **Room Dimension Expansion:**
+  - Expanded room bounds from $260\text{px} \times 170\text{px}$ to $290\text{px} \times 190\text{px}$, curing all RenderFlex overflow issues.
+  - Refactored `InRoomCombatBar` into a compact vertical stack with shrink-wrapped emergency heal button.
+
+### 📖 Documentation & Test Suite
+- **Authoring Comprehensive README:**
+  - Created detailed `README.md` covering game manifesto, architecture topology, lore, controls, and offline pledge.
+- **Directional Unit Tests:**
+  - Added test coverage in `test/engine_test.dart` for scout orientation and stance flipping across traversal directions.
+  - 100% test pass rate (10/10 unit & widget tests).
+
+---
+
 ## [0.0.1] - 23-11-2026
 
 ### 🚀 Initial Release & Architectural Foundation
@@ -26,14 +66,12 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
   - Adjacent rooms reveal glowing outlines with `[TAP TO ENTER]` prompts upon clearing current sector.
   - Moving forward locks previous rooms (no backtracking).
 - **Single Unified Building Viewport (`PixelRoomView`, `ExpeditionScreen`):**
-  - Refactored away from split minimap/arena into a single continuous building cross-section.
-  - Infinite smooth pan-and-zoom navigation powered by `InteractiveViewer`.
+  - Single continuous building cross-section with infinite smooth pan-and-zoom navigation powered by `InteractiveViewer`.
   - In-room staging: Scout, adversaries, elevator cables, and scrap piles exist directly on the physical room floor.
 
 ### 🎨 Pixel Art & Visual Polish
 - **16-Bit Local Sprite Integration:**
   - Added pixel art assets: `assets/images/hero.png` (tactical scout Vance) and `assets/images/enemy.png` (scrap-armored raider).
-  - Implemented horizontal mirroring (`Transform.flip`) so combatants face each other in an authentic 1v1 duel stance.
 - **Flat-Floor 2D Cutaway (`RoomBackgroundView`):**
   - 18px horizontal steel floor slab with 2px walking rail baseline.
   - Low-contrast, desaturated matte bunker wall panels (`#121620` / `#1B2230`) preventing sprite blending.
@@ -43,8 +81,7 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
 
 ### ⚔️ Auto-Battler Combat & Juice
 - **Calibrated Auto-Exchange (`CombatEngine`, `InRoomCombatBar`):**
-  - Automatic 1v1 turn exchanges with rhythmic ~2.2s round cycle (400ms scout attack, 400ms counter-strike, 1400ms pause for tactical decisions).
-  - Manual pause/resume toggle (`[AUTO-BATTLING / PAUSED]`).
+  - Automatic 1v1 turn exchanges with rhythmic ~2.2s round cycle.
 - **Hit Feedback & Combat Juice (`HitShake`):**
   - Decaying sine wave horizontal jitter on hit (`sin(progress * pi * 8) * 6.0 * decay`).
   - Visual hit flashes: white flash for enemies, red flash for player.
@@ -63,7 +100,6 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
   - `[SCRAP (+X G)]`: Dismantles found item into instant Gold currency.
 - **Emergency Medkit Gating (25% Critical Rule):**
   - Medkits can only be consumed when Scout HP drops to $\le 25\%$ critical threshold (`canEmergencyHeal`).
-  - Locked button (`HEAL LOCKED (<=25% HP)`) dynamically transforms into an active amber button (`EMERGENCY HEAL (+50)`).
 
 ### 📚 Content Compendium (`GameDatabase`)
 - **4-Tier Bestiary:**

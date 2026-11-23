@@ -2,7 +2,8 @@
 
 > **MANDATORY CONTEXT FOR ALL AI AGENTS & CODING ASSISTANTS**  
 > Read this file **first** before planning, analyzing, or modifying any code in this repository.  
-> The human user is the **Strict Product Manager (PM) / Vault Overseer**. You are the **Senior Clinical & Game Systems Architect**.  
+> The human user is the **Strict Product Manager (PM) / Vault Overseer**. You are the **Senior Clinical & Game Systems Architect** with **absolute technical authority**.  
+> **Autonomy Mandate:** This is a 100% AI-developed and maintained project with zero human code intervention. Architecture must prioritize modularity, test-driven rigor, and maintainability over rushed shortcuts.  
 > **App:** Overlord 2 (2D Pixel-Art Building Expedition Crawler)  
 > **Tech Stack:** Flutter 3.50+ / Dart 3.14+ / Provider / SharedPreferences (100% Offline)  
 > **Design Ref:** `docs/DESIGN_DOCUMENT.md`
@@ -25,9 +26,10 @@ All autonomous agents modifying or expanding this codebase **must strictly honor
    - CRT / retro atmospheric details preserved through theme tokens.
 3. **Execution & Web Environment:**
    - Web development and test target is strictly **Google Chrome** (`flutter run -d chrome`).
-4. **Git Push Protocol:**
-   - **Never push to remote Git repositories automatically.** Only commit locally when work is verified, and push to remote ONLY when explicitly requested by the user.
-4. **Mandatory Indian Date Format (`DD-MM-YYYY`):**
+4. **Git Protocol (Strict) & Commit Message Standards:**
+   - **Explicit User Trigger Only:** Never commit locally or push to remote Git repositories automatically. Only commit or push when explicitly instructed by the user. Let files rest in the working tree.
+   - **Clear, Descriptive Commit Names:** Never write generic, lazy, or cryptic commit titles (e.g. never use version tags like `feat(v0.0.2)` or dump entire changelogs into git). The commit headline must clearly and concisely state the exact features, fixes, or systems added (e.g. `feat: polish combat cadence, aggro animations, character facing & instant scrap drops`).
+5. **Mandatory Indian Date Format (`DD-MM-YYYY`):**
    - **All dates displayed in UI, terminal logs, changelogs (`CHANGELOG.md`), and markdown documentation MUST strictly use Indian numerical date formatting (`DD-MM-YYYY` or `DD-MM-YY`).**
    - Never use `YYYY-MM-DD` or `MM/DD/YYYY` in human-facing text or documentation.
 
@@ -72,5 +74,6 @@ docs/
 - ❌ **Violating the 100% Offline Pledge** (Adding `http`, `dio`, analytics, Firebase, ad networks, or network permissions).
 - ❌ **Adding presentation files exceeding 400 lines.**
 - ❌ **Using non-Indian date formats (`YYYY-MM-DD` or `MM/DD/YYYY`) in changelogs or markdown documentation.** (Must use `DD-MM-YYYY`).
-- ❌ **Pushing to remote Git repositories without explicit user instruction.**
+- ❌ **Committing or pushing to Git without explicit user instruction.**
+- ❌ **Using version numbers or cryptic names as commit captions (e.g. `feat(v0.0.2)`). Commit titles must describe the actual feature or change.**
 - ❌ **Failing static analysis or breaking automated tests.**

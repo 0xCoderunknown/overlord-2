@@ -240,5 +240,62 @@ void main() {
       expect(player.medkits, 0);
       expect(player.currentHp, 75); // 25 + 50
     });
+
+    test('scout orientation and facing direction updates based on entry direction', () {
+      final building = Building(
+        id: 'b_orient',
+        name: 'Test Orientation',
+        floors: [
+          Floor(
+            floorIndex: 0,
+            rooms: [
+              Room(
+                floorIndex: 0,
+                roomIndex: 0,
+                type: RoomType.entrance,
+                contentType: ContentType.empty,
+                state: RoomState.active,
+              ),
+              Room(
+                floorIndex: 0,
+                roomIndex: 1,
+                type: RoomType.storage,
+                contentType: ContentType.empty,
+                state: RoomState.outline,
+              ),
+              Room(
+                floorIndex: 0,
+                roomIndex: 2,
+                type: RoomType.office,
+                contentType: ContentType.empty,
+                state: RoomState.outline,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final player = ScoutCharacter(name: 'Vance');
+      final controller = ExplorationController(building: building, player: player);
+
+      // Starting at room 0: on left, facing right
+      expect(controller.isScoutOnLeft, isTrue);
+      expect(controller.isScoutFacingRight, isTrue);
+
+      // Moving right to room 1: enters on left, faces right towards room interior
+      controller.moveTo(0, 1);
+      expect(controller.isScoutOnLeft, isTrue);
+      expect(controller.isScoutFacingRight, isTrue);
+
+      // Moving right to room 2: enters on left, faces right
+      controller.moveTo(0, 2);
+      expect(controller.isScoutOnLeft, isTrue);
+      expect(controller.isScoutFacingRight, isTrue);
+
+      // Moving left back to room 1: enters from right, stands on right, faces left
+      controller.moveTo(0, 1);
+      expect(controller.isScoutOnLeft, isFalse);
+      expect(controller.isScoutFacingRight, isFalse);
+    });
   });
 }

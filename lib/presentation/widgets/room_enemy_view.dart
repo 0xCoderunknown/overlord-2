@@ -7,21 +7,33 @@ class RoomEnemyView extends StatelessWidget {
   final Enemy enemy;
   final bool isShaking;
   final String? damagePopup;
+  final bool facesLeft;
+  final bool isAggroed;
 
   const RoomEnemyView({
     super.key,
     required this.enemy,
     required this.isShaking,
     this.damagePopup,
+    this.facesLeft = true,
+    this.isAggroed = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final hpRatio = (enemy.currentHp / enemy.maxHp).clamp(0.0, 1.0);
+    final slideOffset = Offset(
+      isAggroed ? (facesLeft ? -0.15 : 0.15) : 0.0,
+      0.0,
+    );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
+    return AnimatedSlide(
+      offset: slideOffset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutBack,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
         if (enemy.isBoss) ...[
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
@@ -53,7 +65,7 @@ class RoomEnemyView extends StatelessWidget {
           isShaking: isShaking,
           damagePopup: damagePopup,
           child: Transform.flip(
-            flipX: true,
+            flipX: facesLeft,
             child: Image.asset(
               'assets/images/enemy.png',
               height: enemy.isBoss ? 74 : 58,
@@ -90,7 +102,8 @@ class RoomEnemyView extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 }
 

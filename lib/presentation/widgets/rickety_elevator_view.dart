@@ -18,7 +18,7 @@ class RicketyElevatorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 100,
-      height: 170,
+      height: 190,
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: const Color(0xFF0C0E14),
@@ -83,14 +83,17 @@ class RicketyElevatorView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  // Scout inside the lift cage
-                  Image.asset(
-                    'assets/images/hero.png',
-                    height: 56,
-                    fit: BoxFit.contain,
-                    filterQuality: FilterQuality.none,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.shield, color: PixelTheme.neonGreen, size: 30),
+                  // Scout inside the lift cage (facing into the facility rooms)
+                  Transform.flip(
+                    flipX: true,
+                    child: Image.asset(
+                      'assets/images/hero.png',
+                      height: 56,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.none,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.shield, color: PixelTheme.neonGreen, size: 30),
+                    ),
                   ),
                 ] else ...[
                   // Empty lift gate / shaft floor sign
