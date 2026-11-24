@@ -10,7 +10,7 @@
       [ 2D PIXEL-ART FACILITY EXPEDITION CRAWLER // VAULT BUNKER 42 ]
 ```
 
-[![Release: v0.0.1](https://img.shields.io/badge/Release-v0.0.1-green.svg)](CHANGELOG.md)
+[![Changelog](https://img.shields.io/badge/Docs-CHANGELOG.md-green.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-3.50+-02569B?logo=flutter)](https://flutter.dev)
 [![Target: Chrome](https://img.shields.io/badge/Web-Google%20Chrome-4285F4?logo=googlechrome)](https://www.google.com/chrome/)
@@ -54,7 +54,7 @@ No disjointed minimaps or detached arena stages. The entire facility *is* the li
   - `0.4s – 0.8s`: Enemy counter-strikes $\rightarrow$ armor DR mitigation $\rightarrow$ Scout takes damage.
   - `0.8s – 2.2s`: Tactical pause for health evaluation and emergency medkit deployment.
 * **Combat Juice:** Decaying sine-wave hit-shake jitter, white/red hit flashes, and floating damage numbers (`-14 DMG`).
-* **Tactical Control:** In-room `[AUTO-BATTLING / PAUSED]` toggle lets you freeze combat at will.
+* **Auto-Battler Flow:** Streamlined mandatory 1v1 auto-exchange loop with 1.0s pre-strike announcements and three-stage death cadence.
 
 ### 🛗 Narrow Rickety Elevator Columns
 * Vertically aligned 100px elevator shaft connecting ground floors to upper levels.
@@ -98,35 +98,27 @@ No disjointed minimaps or detached arena stages. The entire facility *is* the li
 
 ```
 lib/
-├── core/                        # Pixel theme tokens, color palettes, typography
-│   └── pixel_theme.dart
-├── data/                        # Static datasets (bestiary, loot tables, ambient lore)
-│   └── game_database.dart
-├── domain/                      # Core models (Building, Floor, Room, Scout, Enemy, Items)
-│   └── models.dart
-├── engine/                      # Deterministic logic & state controllers
+├── core/                        # Pixel & terminal theme tokens, color palettes, typography
+├── data/                        # Static datasets (game_database.dart & vault_archive/)
+├── domain/                      # Core & Vault models (models.dart, vault_models.dart)
+├── engine/                      # Deterministic logic & state controllers (engine.dart barrel)
 │   ├── building_generator.dart  # Procedural facility generator with seeded RNG
+│   ├── bunker_manager.dart      # Vault Caps, Armory Stash & Medbay state
 │   ├── combat_engine.dart       # Modular 1v1 auto-exchange & damage math
 │   └── exploration_controller.dart # Fog-of-war, traversal & scrap economy
-├── presentation/                # Modular UI widgets (<400 lines per file)
-│   ├── screens/
-│   │   └── expedition_screen.dart # Main infiltration viewport
-│   └── widgets/
-│       ├── hit_shake.dart         # Decaying sine-wave hit oscillation & damage text
-│       ├── in_room_combat_bar.dart# Floating auto-battler controls & pause toggle
-│       ├── pixel_hud.dart         # Vitality bar, equipped gear tags, wealth HUD
-│       ├── pixel_room_view.dart   # Unified room cell & character staging
-│       ├── rickety_elevator_view.dart # 100px narrow industrial elevator shaft
-│       ├── room_background_view.dart  # Flat steel floor slab & desaturated wall panels
-│       ├── room_enemy_view.dart   # Mirrored enemy sprite, HP bar & boss badge
-│       └── scrap_loot_dialog.dart # Equip vs. Scrap salvage inspection modal
-└── main.dart                    # Application entry point
+├── presentation/                # Modular UI screens & widgets (<400 lines per file)
+│   ├── bunker/                  # OverseerScreen, MarketScreen, StashScreen, FacilityScreen
+│   ├── screens/                 # ExpeditionScreen (2D cutaway infiltration viewport)
+│   └── widgets/                 # Room views, HUD, hit-shake, scrap modal & terminal/
+└── main.dart                    # Application entry point (starts at OverseerScreen)
 test/
+├── bunker_test.dart             # BunkerManager economy & Medbay unit tests
 ├── engine_test.dart             # Unit tests (generator, combat, scrap, gating)
-└── widget_test.dart             # Presentation & HUD smoke tests
+└── widget_test.dart             # Presentation & navigation smoke tests
 docs/
 ├── DESIGN_DOCUMENT.md           # Game design blueprint & mechanics roadmap
-└── BESTIARY_AND_LOOT.md         # Full bestiary and equipment compendium
+├── BESTIARY_AND_LOOT.md         # Full bestiary and equipment compendium
+└── OVERLORD_IMPORT_MANIFEST.md  # Overlord 1 asset & system integration catalog
 ```
 
 ---

@@ -64,10 +64,11 @@ void main() {
 
     test('sellItem sells partial stack and credits half item value', () {
       final medkit = bunker.globalStash.firstWhere((i) => i.id == 'c_medkit');
-      final unitSalePrice = medkit.value ~/ 2;
+      final unitSalePrice = bunker.getSellValue(medkit, 1);
       final initialCaps = bunker.caps;
       final initialQty = medkit.quantity;
 
+      expect(unitSalePrice, equals((medkit.value ~/ 2).clamp(1, 99999)));
       bunker.sellItem(medkit, 1);
 
       expect(bunker.caps, equals(initialCaps + unitSalePrice));

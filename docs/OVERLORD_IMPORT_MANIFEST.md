@@ -187,5 +187,5 @@ Because we are in active development, we now have immediate access to all these 
 - **100% Offline Integrity:** Zero network dependencies, zero remote font calls, all assets resolved locally.
 - **Strict Presentation File Limit:** All UI files strictly $< 400$ lines.
 - **Mandatory Indian Date Format:** All dates formatted as `DD-MM-YYYY` (e.g. `24-11-2026`).
-- **Test Suite:** 19/19 tests passing (`flutter test`) and 0 static analysis warnings (`flutter analyze`).
+- **Test Suite:** All unit and widget tests passing (`flutter test`) with 0 static analysis warnings (`flutter analyze`).
 

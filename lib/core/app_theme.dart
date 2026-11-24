@@ -22,6 +22,19 @@ class AppTheme {
   static final Color red900 = Colors.red[900]!;
   static final Color green300 = Colors.green[300]!;
 
+  static Color tierColor(int tier) {
+    switch (tier) {
+      case 1:
+        return grey;
+      case 2:
+        return blueAccent;
+      case 3:
+        return orangeAccent;
+      default:
+        return terminalGreen;
+    }
+  }
+
   // Monospace Retro Text Styles (100% Offline, System Monospace Font)
   static TextStyle retroText({
     Color? color,

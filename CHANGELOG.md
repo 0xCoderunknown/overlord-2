@@ -6,6 +6,22 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
 
 ---
 
+## [0.0.4] - 25-11-2026
+
+### 🎨 Bunker UI & Economy Polish
+- **Unified Rarity & Liquidation Previews:**
+  - Standardized item tier rarity colors (`AppTheme.tierColor`) across inventory grid cards and Armory Stash inspection modals.
+  - Synchronized Armory Stash sell-value previews (`BunkerManager.getSellValue`) with Vault liquidation rules (minimum 1 Cap per item).
+
+### 🏗️ Architecture & Documentation Sync
+- **Engine Layer Isolation:**
+  - Decoupled `ExplorationController` and `BunkerManager` from UI widget imports and added the `lib/engine/engine.dart` barrel export.
+- **Documentation & Constitution Rewrite:**
+  - Rewrote `AGENTS.md` to remove redundant/stale rules and establish clear layer import boundaries.
+  - Updated `README.md`, `DESIGN_DOCUMENT.md`, and `OVERLORD_IMPORT_MANIFEST.md` to reflect the active Bunker Hub and auto-battler loop.
+
+---
+
 ## [0.0.3] - 24-11-2026
 
 ### 💀 Realistic Death Sequence & Combat Polish

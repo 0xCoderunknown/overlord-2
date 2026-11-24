@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import '../data/vault_archive/item_database.dart';
 import '../domain/vault_models.dart';
 
@@ -69,12 +69,17 @@ class BunkerManager extends ChangeNotifier {
     return true;
   }
 
+  int getSellValue(Item item, [int quantity = 1]) {
+    final unitValue = (item.value ~/ 2).clamp(1, 99999);
+    return unitValue * quantity;
+  }
+
   void sellItem(Item item, int quantity) {
     final idx = globalStash.indexWhere((i) => i.id == item.id);
     if (idx == -1) return;
 
     final actualQty = quantity.clamp(1, globalStash[idx].quantity);
-    final saleValue = (globalStash[idx].value ~/ 2) * actualQty;
+    final saleValue = getSellValue(globalStash[idx], actualQty);
 
     caps += saleValue;
     globalStash[idx].quantity -= actualQty;

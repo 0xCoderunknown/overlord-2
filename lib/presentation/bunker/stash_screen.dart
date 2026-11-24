@@ -30,19 +30,6 @@ class _StashScreenState extends State<StashScreen> {
     super.dispose();
   }
 
-  Color _getItemColor(int tier) {
-    switch (tier) {
-      case 1:
-        return AppTheme.grey;
-      case 2:
-        return AppTheme.blueAccent;
-      case 3:
-        return AppTheme.orangeAccent;
-      default:
-        return AppTheme.terminalGreen;
-    }
-  }
-
   void _showItemInspectionModal(BuildContext context, Item item) {
     showModalBottomSheet(
       context: context,
@@ -60,8 +47,8 @@ class _StashScreenState extends State<StashScreen> {
             }
 
             final currentQty = currentItem.quantity;
-            final singleValue = (currentItem.value ~/ 2).clamp(1, 99999);
-            final bulkValue = singleValue * currentQty;
+            final singleValue = widget.bunkerManager.getSellValue(currentItem, 1);
+            final bulkValue = widget.bunkerManager.getSellValue(currentItem, currentQty);
 
             return TerminalContainer(
               padding: const EdgeInsets.all(20),
@@ -91,7 +78,7 @@ class _StashScreenState extends State<StashScreen> {
                             Text(
                               currentItem.name.toUpperCase(),
                               style: AppTheme.retroText(
-                                color: _getItemColor(currentItem.tier),
+                                color: AppTheme.tierColor(currentItem.tier),
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),

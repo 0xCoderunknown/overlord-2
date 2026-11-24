@@ -56,7 +56,7 @@
 
 ---
 
-## 💰 5. The Paid Requisition & Risk/Reward Economy
+## 💰 4. The Paid Requisition & Risk/Reward Economy
 
 - **Permanent Unlocks $\neq$ Free Gear**:
   - Unlocking a weapon (via kill mastery, milestones, or blueprints) registers it in the Vault Armory.
@@ -70,7 +70,7 @@
 
 ---
 
-## 🗺️ 6. Roadmap & Milestone Horizons
+## 🗺️ 5. Roadmap & Milestone Horizons
 
 - [x] Flutter project initialization (Android + Web)
 - [x] Core Room & Building Data Structures (Grid, Room Types, Traversal Graph)

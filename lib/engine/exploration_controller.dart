@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart';
 import '../domain/models.dart';
 import 'building_generator.dart';
 import 'combat_engine.dart';
