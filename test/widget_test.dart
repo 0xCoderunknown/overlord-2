@@ -26,7 +26,7 @@ void main() {
 
     // Verify Expedition screen is launched
     expect(find.byType(ExpeditionScreen), findsOneWidget);
-    expect(find.textContaining('VITALITY'), findsOneWidget);
+    expect(find.textContaining('SCOUT: VANCE'), findsOneWidget);
     expect(find.textContaining('FLOOR 1'), findsOneWidget);
   });
 }

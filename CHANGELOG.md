@@ -8,6 +8,18 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
 
 ## [0.0.4] - 25-11-2026
 
+### ⚔️ In-Room Combat & HUD Polish
+- **Overhead Vitality & Eyes-In-Game HUD:**
+  - Added color-coded overhead HP bars directly above Scout Vance, matching enemies and bosses.
+  - Stripped the redundant top HP bar and event log from the top HUD so all action, banter, and status stay inside the active room.
+- **Tactile Floating Popups & Clean Room Real Estate:**
+  - Extended floating hit popups (`-DMG`, cyan `BLOCKED` on armor absorption, green `+50` on medkit heal) over `850ms` while keeping hit shakes and flashes crisp.
+  - Removed `[PLAYER'S TURN]` / `[ENEMY'S TURN]` banner pills and dry combat math from the room board.
+  - Fixed enemy/boss `90°` floor knockdown rendering so defeated enemies visibly tip over before turning into scrap piles.
+- **Vance's Solo Banter & Transient Scrap Alerts:**
+  - Replaced third-person narrator logs with Vance's first-person scavenger banter.
+  - Added a transient `EMPTY JUNK` tag above empty scrap piles that clears after `1.5s`.
+
 ### 🎨 Bunker UI & Economy Polish
 - **Unified Rarity & Liquidation Previews:**
   - Standardized item tier rarity colors (`AppTheme.tierColor`) across inventory grid cards and Armory Stash inspection modals.

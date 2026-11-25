@@ -7,6 +7,7 @@ class RicketyElevatorView extends StatelessWidget {
   final bool isActive;
   final bool isMoveTarget;
   final ScoutCharacter player;
+  final String? eventLog;
 
   const RicketyElevatorView({
     super.key,
@@ -14,6 +15,7 @@ class RicketyElevatorView extends StatelessWidget {
     required this.isActive,
     this.isMoveTarget = false,
     required this.player,
+    this.eventLog,
   });
 
   @override
@@ -45,19 +47,44 @@ class RicketyElevatorView extends StatelessWidget {
             top: 4,
             left: 4,
             right: 4,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              color: PixelTheme.roomVoid.withValues(alpha: 0.85),
-              child: Center(
-                child: Text(
-                  '▲ FL-${room.floorIndex + 1} ▼',
-                  style: PixelTheme.pixelStyle(
-                    fontSize: 7,
-                    fontWeight: FontWeight.bold,
-                    color: isActive ? PixelTheme.elevatorCyan : PixelTheme.textMuted,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  color: PixelTheme.roomVoid.withValues(alpha: 0.85),
+                  child: Center(
+                    child: Text(
+                      '▲ FL-${room.floorIndex + 1} ▼',
+                      style: PixelTheme.pixelStyle(
+                        fontSize: 7,
+                        fontWeight: FontWeight.bold,
+                        color: isActive ? PixelTheme.elevatorCyan : PixelTheme.textMuted,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                if (isActive && eventLog != null && eventLog!.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: PixelTheme.roomVoid.withValues(alpha: 0.9),
+                      border: Border.all(color: PixelTheme.borderPixel, width: 1),
+                    ),
+                    child: Text(
+                      '> $eventLog',
+                      style: PixelTheme.pixelStyle(
+                        fontSize: 6,
+                        color: PixelTheme.textLight,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
 

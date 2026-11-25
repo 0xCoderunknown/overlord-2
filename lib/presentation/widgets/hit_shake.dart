@@ -28,14 +28,16 @@ class _HitShakeState extends State<HitShake> with SingleTickerProviderStateMixin
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 350),
+      duration: const Duration(milliseconds: 850),
     );
   }
 
   @override
   void didUpdateWidget(covariant HitShake oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isShaking && !oldWidget.isShaking) {
+    final startedShaking = widget.isShaking && !oldWidget.isShaking;
+    final newPopup = widget.damagePopup != null && widget.damagePopup != oldWidget.damagePopup;
+    if (startedShaking || newPopup) {
       _controller.forward(from: 0.0);
     }
   }
@@ -48,13 +50,30 @@ class _HitShakeState extends State<HitShake> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    final isHeal = widget.damagePopup?.startsWith('+') ?? false;
+    final isBlocked = widget.damagePopup == 'BLOCKED';
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        // Horizontal shake oscillation: sin curve decaying over time
         final progress = _controller.value;
-        final decay = 1.0 - progress;
-        final shakeOffset = sin(progress * pi * 8) * 6.0 * decay;
+
+        // Shake & hit flash occur in the first 40% (~340ms) so the unit reacts crisply
+        final isShakingPhase = !isHeal && progress > 0 && progress < 0.4;
+        final shakeProgress = (progress / 0.4).clamp(0.0, 1.0);
+        final shakeDecay = 1.0 - shakeProgress;
+        final shakeOffset = isShakingPhase ? sin(shakeProgress * pi * 8) * 6.0 * shakeDecay : 0.0;
+
+        // Floating number stays solid for 60%, then fades cleanly over the last 40%
+        final popupOpacity = progress < 0.6
+            ? 1.0
+            : (1.0 - (progress - 0.6) / 0.4).clamp(0.0, 1.0);
+
+        final popupColor = isHeal
+            ? PixelTheme.neonGreen
+            : (isBlocked
+                ? PixelTheme.elevatorCyan
+                : (widget.isHero ? PixelTheme.alertRed : PixelTheme.warningAmber));
 
         return Stack(
           clipBehavior: Clip.none,
@@ -62,24 +81,26 @@ class _HitShakeState extends State<HitShake> with SingleTickerProviderStateMixin
           children: [
             Transform.translate(
               offset: Offset(shakeOffset, 0),
-              child: progress > 0 && progress < 0.4
+              child: isShakingPhase && progress < 0.25
                   ? ColorFiltered(
                       colorFilter: ColorFilter.mode(
-                        widget.isHero
-                            ? PixelTheme.alertRed.withValues(alpha: 0.7)
-                            : Colors.white.withValues(alpha: 0.8),
+                        isBlocked
+                            ? PixelTheme.elevatorCyan.withValues(alpha: 0.6)
+                            : (widget.isHero
+                                ? PixelTheme.alertRed.withValues(alpha: 0.7)
+                                : Colors.white.withValues(alpha: 0.8)),
                         BlendMode.srcATop,
                       ),
                       child: widget.child,
                     )
                   : widget.child,
             ),
-            // Floating damage number popup
+            // Floating damage / block / heal popup
             if (widget.damagePopup != null && _controller.isAnimating)
               Positioned(
-                top: -24 - (progress * 18),
+                top: -18 - (progress * 30),
                 child: Opacity(
-                  opacity: decay.clamp(0.0, 1.0),
+                  opacity: popupOpacity,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     color: PixelTheme.roomVoid.withValues(alpha: 0.9),
@@ -88,7 +109,7 @@ class _HitShakeState extends State<HitShake> with SingleTickerProviderStateMixin
                       style: PixelTheme.pixelStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
-                        color: widget.isHero ? PixelTheme.alertRed : PixelTheme.warningAmber,
+                        color: popupColor,
                       ),
                     ),
                   ),

@@ -6,22 +6,18 @@ class PixelHud extends StatelessWidget {
   final ScoutCharacter player;
   final int floorIndex;
   final int roomIndex;
-  final String? eventLog;
 
   const PixelHud({
     super.key,
     required this.player,
     required this.floorIndex,
     required this.roomIndex,
-    this.eventLog,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hpRatio = (player.currentHp / player.maxHp).clamp(0.0, 1.0);
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: const BoxDecoration(
         color: PixelTheme.roomVoid,
         border: Border(
@@ -39,13 +35,13 @@ class PixelHud extends StatelessWidget {
                   Text(
                     'SCOUT: ${player.name.toUpperCase()}',
                     style: PixelTheme.pixelStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: PixelTheme.neonGreen,
                     ),
                   ),
                   if (player.psychoActive) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                       color: PixelTheme.alertRed,
@@ -61,84 +57,39 @@ class PixelHud extends StatelessWidget {
                   ],
                 ],
               ),
-              Text(
-                'L${floorIndex + 1} : R${roomIndex + 1}',
-                style: PixelTheme.pixelStyle(
-                  fontSize: 12,
-                  color: PixelTheme.elevatorCyan,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  Text(
+                    'GOLD: ${player.gold}',
+                    style: PixelTheme.pixelStyle(
+                      fontSize: 10,
+                      color: PixelTheme.chestGold,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'MEDS: ${player.medkits}',
+                    style: PixelTheme.pixelStyle(
+                      fontSize: 10,
+                      color: PixelTheme.elevatorCyan,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'L${floorIndex + 1}:R${roomIndex + 1}',
+                    style: PixelTheme.pixelStyle(
+                      fontSize: 10,
+                      color: PixelTheme.textMuted,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          // Vitality Bar & Wealth
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'VITALITY',
-                          style: PixelTheme.pixelStyle(
-                            fontSize: 9,
-                            color: PixelTheme.textMuted,
-                          ),
-                        ),
-                        Text(
-                          '${player.currentHp} / ${player.maxHp} HP',
-                          style: PixelTheme.pixelStyle(
-                            fontSize: 9,
-                            color: hpRatio < 0.3 ? PixelTheme.alertRed : PixelTheme.textLight,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Container(
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: PixelTheme.roomUnrevealed,
-                        border: Border.all(color: PixelTheme.borderPixel),
-                      ),
-                      child: FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: hpRatio,
-                        child: Container(
-                          color: hpRatio < 0.3
-                              ? PixelTheme.alertRed
-                              : (hpRatio < 0.6 ? PixelTheme.warningAmber : PixelTheme.terminalGreen),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 14),
-              Text(
-                'GOLD: ${player.gold}',
-                style: PixelTheme.pixelStyle(
-                  fontSize: 11,
-                  color: PixelTheme.chestGold,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'MEDS: ${player.medkits}',
-                style: PixelTheme.pixelStyle(
-                  fontSize: 11,
-                  color: PixelTheme.elevatorCyan,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
           // Equipped gear tags
           Row(
             children: [
@@ -167,22 +118,6 @@ class PixelHud extends StatelessWidget {
               ),
             ],
           ),
-          if (eventLog != null && eventLog!.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              color: PixelTheme.roomUnrevealed,
-              child: Text(
-                '> $eventLog',
-                style: PixelTheme.pixelStyle(
-                  fontSize: 9,
-                  color: PixelTheme.textLight,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
         ],
       ),
     );

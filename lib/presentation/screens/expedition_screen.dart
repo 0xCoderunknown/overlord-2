@@ -99,7 +99,6 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                         player: player,
                         floorIndex: _controller.currentFloorIndex,
                         roomIndex: _controller.currentRoomIndex,
-                        eventLog: _controller.lastEventLog,
                       ),
                       Expanded(child: _buildBuildingViewport()),
                     ],
@@ -186,10 +185,10 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                     isEnemyAggroed: _controller.isEnemyAggroed,
                     isEnemyLyingOnGround: _controller.isEnemyLyingOnGround,
                     isHeroLyingOnGround: _controller.isHeroLyingOnGround,
-                    combatBannerText: _controller.combatBannerText,
+                    scrapBannerText: isActive ? _controller.scrapBannerText : null,
+                    eventLog: isActive ? _controller.lastEventLog : null,
                     onTapRoom: () =>
                         _controller.moveTo(room.floorIndex, room.roomIndex),
-                    onAttack: () => _controller.executeCombatRound(),
                     onHeal: () => _controller.useMedkit(),
                     onSearchScrap: () => _controller.searchScrapPile(),
                   );

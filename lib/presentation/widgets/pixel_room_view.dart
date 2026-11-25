@@ -2,11 +2,11 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/pixel_theme.dart';
 import '../../domain/models.dart';
 import '../../engine/combat_engine.dart';
-import 'hit_shake.dart';
 import 'in_room_combat_bar.dart';
 import 'rickety_elevator_view.dart';
 import 'room_background_view.dart';
 import 'room_enemy_view.dart';
+import 'room_hero_view.dart';
 
 class PixelRoomView extends StatelessWidget {
   final Room room;
@@ -23,9 +23,9 @@ class PixelRoomView extends StatelessWidget {
   final bool isEnemyAggroed;
   final bool isEnemyLyingOnGround;
   final bool isHeroLyingOnGround;
-  final String? combatBannerText;
+  final String? scrapBannerText;
+  final String? eventLog;
   final VoidCallback onTapRoom;
-  final VoidCallback onAttack;
   final VoidCallback onHeal;
   final VoidCallback onSearchScrap;
 
@@ -45,9 +45,9 @@ class PixelRoomView extends StatelessWidget {
     this.isEnemyAggroed = false,
     this.isEnemyLyingOnGround = false,
     this.isHeroLyingOnGround = false,
-    this.combatBannerText,
+    this.scrapBannerText,
+    this.eventLog,
     required this.onTapRoom,
-    required this.onAttack,
     required this.onHeal,
     required this.onSearchScrap,
   });
@@ -64,6 +64,7 @@ class PixelRoomView extends StatelessWidget {
           isActive: isActive,
           isMoveTarget: isMoveTarget,
           player: player,
+          eventLog: isActive ? eventLog : null,
         ),
       );
     }
@@ -257,17 +258,45 @@ class PixelRoomView extends StatelessWidget {
               ),
             ),
 
-            // In-Room Auto-Combat Command Bar
-            if (isActive && (room.hasUnresolvedEnemy || combatBannerText != null))
+            // In-Room Emergency Heal / Combat Banter OR Exploration Message
+            if (isActive && room.hasUnresolvedEnemy)
               Positioned(
-                top: 26,
-                left: 12,
-                right: 12,
+                top: 24,
+                left: 10,
+                right: 10,
                 child: InRoomCombatBar(
                   room: room,
                   player: player,
-                  bannerText: combatBannerText,
+                  eventLog: eventLog,
                   onHeal: onHeal,
+                ),
+              )
+            else if (isActive && eventLog != null && eventLog!.isNotEmpty)
+              Positioned(
+                top: 24,
+                left: 10,
+                right: 10,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: PixelTheme.roomVoid.withValues(alpha: 0.9),
+                      border: Border.all(
+                        color: PixelTheme.borderPixel,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      '> $eventLog',
+                      style: PixelTheme.pixelStyle(
+                        fontSize: 7,
+                        color: PixelTheme.textLight,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -277,60 +306,12 @@ class PixelRoomView extends StatelessWidget {
   }
 
   Widget _buildScoutInRoom() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AnimatedSlide(
-          offset: Offset(0, isHeroLyingOnGround ? 0.24 : 0.0),
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeIn,
-          child: AnimatedRotation(
-            // Rotate anticlockwise (-0.25) if facing right, clockwise (0.25) if facing left
-            turns: isHeroLyingOnGround ? (isScoutFacingRight ? -0.25 : 0.25) : 0.0,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeIn,
-            child: HitShake(
-              isHero: true,
-              isShaking: isShakingHero,
-              damagePopup: heroDamagePopup,
-              child: Transform.flip(
-                flipX: !isScoutFacingRight,
-                child: Image.asset(
-                  'assets/images/hero.png',
-                  height: 62,
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.none,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Icon(Icons.shield, color: PixelTheme.neonGreen, size: 36),
-                ),
-              ),
-            ),
-          ),
-        ),
-        // Ground shadow on the walking rail
-        Container(
-          width: isHeroLyingOnGround ? 54 : 32,
-          height: 3,
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.7),
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(height: 1),
-        if (!isHeroLyingOnGround)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            color: PixelTheme.roomVoid.withValues(alpha: 0.9),
-            child: Text(
-              player.name.toUpperCase(),
-              style: PixelTheme.pixelStyle(
-                fontSize: 7,
-                fontWeight: FontWeight.bold,
-                color: PixelTheme.neonGreen,
-              ),
-            ),
-          ),
-      ],
+    return RoomHeroView(
+      player: player,
+      isShaking: isShakingHero,
+      damagePopup: heroDamagePopup,
+      facesRight: isScoutFacingRight,
+      isLyingOnGround: isHeroLyingOnGround,
     );
   }
 
@@ -342,6 +323,21 @@ class PixelRoomView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (isActive && scrapBannerText != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                color: PixelTheme.roomVoid.withValues(alpha: 0.95),
+                child: Text(
+                  scrapBannerText!,
+                  style: PixelTheme.pixelStyle(
+                    fontSize: 7,
+                    fontWeight: FontWeight.bold,
+                    color: PixelTheme.textMuted,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 2),
+            ],
             Icon(
               Icons.hardware,
               color: scrap.isSearched ? PixelTheme.borderPixel : PixelTheme.chestGold,
@@ -364,7 +360,7 @@ class PixelRoomView extends StatelessWidget {
       );
     }
 
-    if (room.hasUnresolvedEnemy) {
+    if (room.enemy != null) {
       return RoomEnemyView(
         enemy: room.enemy!,
         isShaking: isShakingEnemy,

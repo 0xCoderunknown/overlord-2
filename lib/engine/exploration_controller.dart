@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+
 import '../domain/models.dart';
 import 'building_generator.dart';
 import 'combat_engine.dart';
@@ -29,7 +31,7 @@ class ExplorationController extends ChangeNotifier {
   bool isScoutOnLeft = true;
   bool isScoutFacingRight = true;
   bool isEnemyAggroed = false;
-  String? combatBannerText;
+  String? scrapBannerText;
 
   // Death State Transitions (0.5s standing at 0 HP -> 1.0s lying on ground -> scrap/defeat)
   bool isEnemyLyingOnGround = false;
@@ -46,7 +48,8 @@ class ExplorationController extends ChangeNotifier {
     _initStartingRoom();
   }
 
-  Room get currentRoom => building.floors[currentFloorIndex].rooms[currentRoomIndex];
+  Room get currentRoom =>
+      building.floors[currentFloorIndex].rooms[currentRoomIndex];
 
   void _initStartingRoom() {
     currentRoom.state = RoomState.active;
@@ -54,13 +57,16 @@ class ExplorationController extends ChangeNotifier {
   }
 
   bool canMoveTo(int targetFloor, int targetRoom) {
-    if (activeCombat != null && activeCombat!.status == CombatStatus.inProgress) {
+    if (activeCombat != null &&
+        activeCombat!.status == CombatStatus.inProgress) {
       return false;
     }
 
     final target = building.getRoom(targetFloor, targetRoom);
     if (target == null || target.state == RoomState.unrevealed) return false;
-    if (targetFloor == currentFloorIndex && targetRoom == currentRoomIndex) return false;
+    if (targetFloor == currentFloorIndex && targetRoom == currentRoomIndex) {
+      return false;
+    }
 
     // Horizontal adjacent
     if (targetFloor == currentFloorIndex) {
@@ -100,29 +106,28 @@ class ExplorationController extends ChangeNotifier {
     pendingScrapItem = null;
     isEnemyAggroed = false;
     isEnemyLyingOnGround = false;
-    combatBannerText = null;
+    heroDamagePopup = null;
+    enemyDamagePopup = null;
+    scrapBannerText = null;
 
     if (currentRoom.hasUnresolvedEnemy) {
-      activeCombat = CombatEngine(
-        player: player,
-        enemy: currentRoom.enemy!,
-      );
+      activeCombat = CombatEngine(player: player, enemy: currentRoom.enemy!);
       final enemy = currentRoom.enemy!;
       lastEventLog = enemy.isBoss
-          ? 'DANGER! APEX BOSS [${enemy.name.toUpperCase()}] ENGAGED! ${enemy.description}'
-          : 'Hostile ${enemy.name} engaged! ${enemy.description}';
+          ? '"Whoa... now that\'s a big problem. Steady, Vance."'
+          : _pickCombatBanter(targetFloor, targetRoom);
       startAutoCombat();
     } else {
       activeCombat = null;
       isAutoCombatActive = false;
       if (currentRoom.hasUnsearchedScrap) {
-        lastEventLog = 'A salvageable Scrap Pile lies in the room.';
+        lastEventLog = '"Someone left a pile of scrap here. Might be worth a look."';
       } else if (currentRoom.isElevator) {
-        lastEventLog = 'Elevator Shaft. Vertical transit online.';
+        lastEventLog = '"Rusted cables, flickering bulb... hope this lift holds."';
       } else if (currentRoom.ambientLore != null) {
         lastEventLog = currentRoom.ambientLore;
       } else {
-        lastEventLog = 'Sector cleared and quiet.';
+        lastEventLog = '"Quiet in here. Too quiet..."';
       }
     }
 
@@ -131,13 +136,22 @@ class ExplorationController extends ChangeNotifier {
   }
 
   void _revealAdjacentRooms(int floorIdx, int roomIdx) {
-    void reveal(Room? r) { if (r != null && r.state == RoomState.unrevealed) r.state = RoomState.outline; }
+    void reveal(Room? r) {
+      if (r != null && r.state == RoomState.unrevealed) {
+        r.state = RoomState.outline;
+      }
+    }
+
     final floor = building.floors[floorIdx];
     if (roomIdx > 0) reveal(floor.rooms[roomIdx - 1]);
     if (roomIdx < floor.rooms.length - 1) reveal(floor.rooms[roomIdx + 1]);
     if (floor.rooms[roomIdx].isElevator) {
-      if (floorIdx + 1 < building.floors.length) reveal(building.floors[floorIdx + 1].rooms[roomIdx]);
-      if (floorIdx - 1 >= 0) reveal(building.floors[floorIdx - 1].rooms[roomIdx]);
+      if (floorIdx + 1 < building.floors.length) {
+        reveal(building.floors[floorIdx + 1].rooms[roomIdx]);
+      }
+      if (floorIdx - 1 >= 0) {
+        reveal(building.floors[floorIdx - 1].rooms[roomIdx]);
+      }
     }
   }
 
@@ -145,7 +159,10 @@ class ExplorationController extends ChangeNotifier {
   // AUTO-BATTLER ENGINE & CADENCE WITH DEATH ANIMATIONS
   // --------------------------------------------------------------------------
   void startAutoCombat() {
-    if (activeCombat == null || activeCombat!.status != CombatStatus.inProgress) return;
+    if (activeCombat == null ||
+        activeCombat!.status != CombatStatus.inProgress) {
+      return;
+    }
     if (isAutoCombatActive) return;
     isAutoCombatActive = true;
     _runAutoCombatLoop();
@@ -166,12 +183,15 @@ class ExplorationController extends ChangeNotifier {
   }
 
   Future<void> _runAutoCombatLoop() async {
-    combatBannerText = 'COMBAT STARTED';
     isEnemyAggroed = true;
     notifyListeners();
 
     await Future.delayed(const Duration(milliseconds: 1000));
-    if (_disposed || activeCombat == null || activeCombat!.status != CombatStatus.inProgress) return;
+    if (_disposed ||
+        activeCombat == null ||
+        activeCombat!.status != CombatStatus.inProgress) {
+      return;
+    }
 
     while (!_disposed &&
         isAutoCombatActive &&
@@ -180,12 +200,11 @@ class ExplorationController extends ChangeNotifier {
       if (_isProcessingRound) return;
       _isProcessingRound = true;
 
-      // Phase 1: Player's Turn Announcement
-      combatBannerText = "PLAYER'S TURN";
-      notifyListeners();
-
+      // Phase 1: Player's Turn anticipation
       await Future.delayed(const Duration(milliseconds: 1000));
-      if (_disposed || activeCombat == null || activeCombat!.status != CombatStatus.inProgress) {
+      if (_disposed ||
+          activeCombat == null ||
+          activeCombat!.status != CombatStatus.inProgress) {
         _isProcessingRound = false;
         return;
       }
@@ -198,7 +217,6 @@ class ExplorationController extends ChangeNotifier {
         isAutoCombatActive = false;
         isShakingEnemy = true;
         enemyDamagePopup = '-$pDmg';
-        combatBannerText = 'LETHAL BLOW';
         notifyListeners();
 
         // 1. Stand at 0 HP for 0.5s
@@ -208,7 +226,6 @@ class ExplorationController extends ChangeNotifier {
 
         // 2. Lie on ground for 1.0s (rotated 90 degrees)
         isEnemyLyingOnGround = true;
-        combatBannerText = 'TARGET DOWN';
         notifyListeners();
 
         await Future.delayed(const Duration(milliseconds: 1000));
@@ -232,26 +249,28 @@ class ExplorationController extends ChangeNotifier {
       // 3-second tactical gap before Enemy's turn
       _isProcessingRound = false;
       await Future.delayed(const Duration(seconds: 3));
-      if (_disposed || activeCombat == null || activeCombat!.status != CombatStatus.inProgress) return;
+      if (_disposed ||
+          activeCombat == null ||
+          activeCombat!.status != CombatStatus.inProgress) {
+        return;
+      }
       _isProcessingRound = true;
 
-      // Phase 2: Enemy's Turn Announcement
-      combatBannerText = "ENEMY'S TURN";
-      notifyListeners();
-
+      // Phase 2: Enemy's Turn anticipation
       await Future.delayed(const Duration(milliseconds: 1000));
-      if (_disposed || activeCombat == null || activeCombat!.status != CombatStatus.inProgress) {
+      if (_disposed ||
+          activeCombat == null ||
+          activeCombat!.status != CombatStatus.inProgress) {
         _isProcessingRound = false;
         return;
       }
 
       final result = activeCombat!.executeEnemyStrike(pDmg);
-      lastEventLog = result.narrative;
-      if (result.enemyDamageDealt > 0) {
-        isShakingHero = true;
-        heroDamagePopup = '-${result.enemyDamageDealt}';
-        notifyListeners();
-      }
+      isShakingHero = true;
+      heroDamagePopup = result.enemyDamageDealt > 0
+          ? '-${result.enemyDamageDealt}'
+          : 'BLOCKED';
+      notifyListeners();
 
       await Future.delayed(const Duration(milliseconds: 400));
       if (_disposed) return;
@@ -262,7 +281,6 @@ class ExplorationController extends ChangeNotifier {
       if (result.status == CombatStatus.defeat) {
         _isProcessingRound = false;
         isAutoCombatActive = false;
-        combatBannerText = 'CRITICAL HIT';
         notifyListeners();
 
         // 1. Stand at 0 HP for 0.5s
@@ -271,7 +289,6 @@ class ExplorationController extends ChangeNotifier {
 
         // 2. Lie on ground for 1.0s (rotated 90 degrees)
         isHeroLyingOnGround = true;
-        combatBannerText = 'SCOUT FLATLINED';
         notifyListeners();
 
         await Future.delayed(const Duration(milliseconds: 1000));
@@ -291,19 +308,12 @@ class ExplorationController extends ChangeNotifier {
 
   Future<void> _handleCombatVictory(int pDmg) async {
     isAutoCombatActive = false;
-    combatBannerText = 'ENEMY DEFEATED';
     isEnemyAggroed = false;
     isShakingEnemy = false;
     currentRoom.scrapPile = generator.generateScrapPile(currentFloorIndex);
     currentRoom.state = RoomState.cleared;
     _revealAdjacentRooms(currentFloorIndex, currentRoomIndex);
-    lastEventLog =
-        '${player.name} struck for $pDmg DMG! Target eliminated! Defeated enemy collapsed into a Scrap Pile.';
-    notifyListeners();
-
-    await Future.delayed(const Duration(milliseconds: 1800));
-    if (_disposed) return;
-    combatBannerText = null;
+    lastEventLog = '"One less thing between me and the exit. Let\'s check the scrap."';
     notifyListeners();
   }
 
@@ -323,12 +333,30 @@ class ExplorationController extends ChangeNotifier {
     scrap.isSearched = true;
     if (scrap.containedItem != null) {
       pendingScrapItem = scrap.containedItem;
-      lastEventLog = 'Found salvage: ${pendingScrapItem!.name} (${pendingScrapItem!.statDescription})!';
+      lastEventLog =
+          '"Jackpot. Looks like this ${pendingScrapItem!.name} still works."';
     } else {
       pendingScrapItem = null;
-      lastEventLog = 'Rummaged through scrap pile... Nothing found in the junk.';
+      lastEventLog = null;
+      scrapBannerText = 'EMPTY JUNK';
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (!_disposed && scrapBannerText == 'EMPTY JUNK') {
+          scrapBannerText = null;
+          notifyListeners();
+        }
+      });
     }
     notifyListeners();
+  }
+
+  String _pickCombatBanter(int floorIdx, int roomIdx) {
+    const quips = [
+      '"Great. Something else trying to eat me."',
+      '"Easy now... just me, my gun, and bad lighting."',
+      '"Stay sharp, Vance. Nobody\'s coming to bail you out."',
+      '"Looks angry. Let\'s make this quick."',
+    ];
+    return quips[(floorIdx * 7 + roomIdx) % quips.length];
   }
 
   void equipPendingItem() {
@@ -339,19 +367,34 @@ class ExplorationController extends ChangeNotifier {
       final old = player.equippedWeapon;
       player.equippedWeapon = item;
       player.gold += old.scrapValue;
-      lastEventLog = 'Equipped ${item.name}! Old weapon scrapped for +${old.scrapValue} Gold.';
+      lastEventLog =
+          'Equipped ${item.name}! Old weapon scrapped for +${old.scrapValue} Gold.';
     } else if (item.isArmor) {
       final old = player.equippedArmor;
       player.equippedArmor = item;
       player.gold += old.scrapValue;
-      lastEventLog = 'Equipped ${item.name}! Old armor scrapped for +${old.scrapValue} Gold.';
+      lastEventLog =
+          'Equipped ${item.name}! Old armor scrapped for +${old.scrapValue} Gold.';
     } else if (item.isConsumable) {
       switch (item.consumableEffect) {
-        case ConsumableEffect.heal: player.medkits++; lastEventLog = 'Acquired Wasteland Trauma Medkit.'; break;
-        case ConsumableEffect.psycho: player.psychoActive = true; lastEventLog = 'Consumed Combat Psycho (+6 DMG).'; break;
-        case ConsumableEffect.stealth: player.stealthboys++; lastEventLog = 'Acquired Stealthboy Cloak Unit.'; break;
-        case ConsumableEffect.key: player.keys++; lastEventLog = 'Acquired Security Master Key.'; break;
-        default: break;
+        case ConsumableEffect.heal:
+          player.medkits++;
+          lastEventLog = 'Acquired Wasteland Trauma Medkit.';
+          break;
+        case ConsumableEffect.psycho:
+          player.psychoActive = true;
+          lastEventLog = 'Consumed Combat Psycho (+6 DMG).';
+          break;
+        case ConsumableEffect.stealth:
+          player.stealthboys++;
+          lastEventLog = 'Acquired Stealthboy Cloak Unit.';
+          break;
+        case ConsumableEffect.key:
+          player.keys++;
+          lastEventLog = 'Acquired Security Master Key.';
+          break;
+        default:
+          break;
       }
     }
 
@@ -372,7 +415,8 @@ class ExplorationController extends ChangeNotifier {
     if (!player.canEmergencyHeal) return;
     player.medkits--;
     player.heal(50);
-    lastEventLog = 'EMERGENCY MEDKIT: ${player.name} restored +50 HP!';
+    heroDamagePopup = '+50';
+    lastEventLog = '"Stings like rad-burns, but I\'m still breathing."';
     notifyListeners();
   }
 
