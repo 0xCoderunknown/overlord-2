@@ -78,6 +78,15 @@ class PixelHud extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Text(
+                    'BAG: ${player.backpack.length}',
+                    style: PixelTheme.pixelStyle(
+                      fontSize: 10,
+                      color: PixelTheme.neonGreen,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
                     'L${floorIndex + 1}:R${roomIndex + 1}',
                     style: PixelTheme.pixelStyle(
                       fontSize: 10,

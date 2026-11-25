@@ -107,7 +107,7 @@ void main() {
   });
 
   group('ExplorationController Scrap & Equip/Scrap Tests', () {
-    test('searching scrap pile and equipping weapon scraps old weapon for gold', () {
+    test('searching scrap pile adds found item straight to backpack and empty scrap logs a quip', () {
       final building = Building(
         id: 'b1',
         name: 'Test',
@@ -140,26 +140,79 @@ void main() {
                   ),
                 ),
               ),
+              Room(
+                floorIndex: 0,
+                roomIndex: 2,
+                type: RoomType.office,
+                contentType: ContentType.scrap,
+                state: RoomState.outline,
+                scrapPile: ScrapPile(id: 's2', containedItem: null),
+              ),
             ],
           ),
         ],
       );
 
       final player = ScoutCharacter(name: 'Vance', gold: 0);
-      final initialWeaponScrapVal = player.equippedWeapon.scrapValue;
       final controller = ExplorationController(building: building, player: player);
 
       controller.moveTo(0, 1);
       expect(controller.currentRoom.hasUnsearchedScrap, isTrue);
 
       controller.searchScrapPile();
-      expect(controller.pendingScrapItem, isNotNull);
-      expect(controller.pendingScrapItem!.name, 'Shotgun');
+      expect(player.backpack.length, 1);
+      expect(player.backpack.first.name, 'Shotgun');
+      expect(controller.lastEventLog, contains('Shotgun'));
+      expect(controller.lastEventLog, contains('backpack'));
+      expect(controller.scrapBannerText, '+ SHOTGUN');
 
-      controller.equipPendingItem();
-      expect(player.equippedWeapon.name, 'Shotgun');
-      expect(player.gold, initialWeaponScrapVal);
-      expect(controller.pendingScrapItem, isNull);
+      // Empty scrap pile should still produce a hero quip
+      controller.moveTo(0, 2);
+      controller.searchScrapPile();
+      expect(player.backpack.length, 1);
+      expect(controller.lastEventLog, isNotNull);
+      expect(controller.lastEventLog, isNotEmpty);
+      expect(controller.scrapBannerText, 'EMPTY JUNK');
+    });
+
+    test('combat banter produces distinct lines across rounds 1 to 3 and tracks roundCount', () {
+      final building = Building(
+        id: 'b_banter',
+        name: 'Test Banter',
+        floors: [
+          Floor(
+            floorIndex: 0,
+            rooms: [
+              Room(
+                floorIndex: 0,
+                roomIndex: 0,
+                type: RoomType.entrance,
+                contentType: ContentType.empty,
+                state: RoomState.active,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final player = ScoutCharacter(name: 'Vance');
+      final controller = ExplorationController(building: building, player: player);
+
+      final line1 = controller.pickCombatQuip(1, isBoss: false, isLowHp: false, seed: 1);
+      final line2 = controller.pickCombatQuip(2, isBoss: false, isLowHp: false, seed: 1);
+      final line2Low = controller.pickCombatQuip(2, isBoss: false, isLowHp: true, seed: 1);
+      final line3 = controller.pickCombatQuip(3, isBoss: false, isLowHp: false, seed: 1);
+
+      expect({line1, line2, line3}.length, 3);
+      expect(line2Low, isNot(equals(line2)));
+
+      final enemy = Enemy(name: 'Scrapper', maxHp: 100, minDamage: 1, maxDamage: 2);
+      final combat = CombatEngine(player: player, enemy: enemy, random: Random(7));
+      expect(combat.roundCount, 0);
+      combat.executeRound();
+      expect(combat.roundCount, 1);
+      combat.executeRound();
+      expect(combat.roundCount, 2);
     });
 
     test('ambient lore is displayed when moving into empty rooms', () {

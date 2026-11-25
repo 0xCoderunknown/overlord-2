@@ -27,6 +27,7 @@ class CombatEngine {
   final ScoutCharacter player;
   final Enemy enemy;
   final Random rng;
+  int roundCount = 0;
 
   CombatEngine({
     required this.player,
@@ -58,6 +59,7 @@ class CombatEngine {
   /// 1. Player strikes the enemy
   int executePlayerStrike() {
     if (status != CombatStatus.inProgress) return 0;
+    roundCount++;
     final pDmg = player.rollDamage(rng);
     enemy.currentHp = max(0, enemy.currentHp - pDmg);
 

@@ -122,6 +122,7 @@ class ScoutCharacter {
 
   EquipmentItem equippedWeapon;
   EquipmentItem equippedArmor;
+  final List<EquipmentItem> backpack;
 
   ScoutCharacter({
     required this.name,
@@ -133,7 +134,9 @@ class ScoutCharacter {
     this.psychoActive = false,
     EquipmentItem? starterWeapon,
     EquipmentItem? starterArmor,
+    List<EquipmentItem>? backpack,
   })  : currentHp = maxHp,
+        backpack = backpack ?? [],
         equippedWeapon = starterWeapon ??
             const EquipmentItem(
               id: 'wpn_pipe_pistol',

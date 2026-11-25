@@ -51,7 +51,7 @@ class InRoomCombatBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           color: PixelTheme.roomVoid.withValues(alpha: 0.85),
           child: Text(
-            '> $eventLog',
+            eventLog!,
             style: PixelTheme.pixelStyle(
               fontSize: 7,
               color: PixelTheme.textLight,

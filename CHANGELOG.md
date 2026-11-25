@@ -17,8 +17,9 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
   - Removed `[PLAYER'S TURN]` / `[ENEMY'S TURN]` banner pills and dry combat math from the room board.
   - Fixed enemy/boss `90°` floor knockdown rendering so defeated enemies visibly tip over before turning into scrap piles.
 - **Vance's Solo Banter & Transient Scrap Alerts:**
-  - Replaced third-person narrator logs with Vance's first-person scavenger banter.
-  - Added a transient `EMPTY JUNK` tag above empty scrap piles that clears after `1.5s`.
+  - Replaced third-person narrator logs with Vance's first-person scavenger banter, and removed the `> ` prefix from dialogue banners.
+  - Added 1–3 dynamic combat banter lines per fight scaling with round count (opening, mid-fight / critical low-HP, and prolonged-fight reactions).
+  - Searching scrap piles now packs discovered gear straight into Vance's backpack (`BAG` HUD counter) with no keep/scrap popup, while empty scrap triggers a scavenger quip alongside the transient `EMPTY JUNK` tag.
 
 ### 🎨 Bunker UI & Economy Polish
 - **Unified Rarity & Liquidation Previews:**

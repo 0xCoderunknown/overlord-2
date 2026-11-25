@@ -6,7 +6,6 @@ import '../../engine/building_generator.dart';
 import '../../engine/exploration_controller.dart';
 import '../widgets/pixel_hud.dart';
 import '../widgets/pixel_room_view.dart';
-import '../widgets/scrap_loot_dialog.dart';
 
 class ExpeditionScreen extends StatefulWidget {
   const ExpeditionScreen({super.key});
@@ -103,14 +102,6 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                       Expanded(child: _buildBuildingViewport()),
                     ],
                   ),
-            // Salvage Loot Popup
-            if (_controller.pendingScrapItem != null)
-              ScrapLootDialog(
-                item: _controller.pendingScrapItem!,
-                player: player,
-                onEquip: () => _controller.equipPendingItem(),
-                onScrap: () => _controller.scrapPendingItem(),
-              ),
           ],
         ),
       ),

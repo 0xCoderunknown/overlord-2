@@ -287,7 +287,7 @@ class PixelRoomView extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      '> $eventLog',
+                      eventLog!,
                       style: PixelTheme.pixelStyle(
                         fontSize: 7,
                         color: PixelTheme.textLight,

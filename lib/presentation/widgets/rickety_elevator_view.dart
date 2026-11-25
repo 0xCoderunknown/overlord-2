@@ -73,7 +73,7 @@ class RicketyElevatorView extends StatelessWidget {
                       border: Border.all(color: PixelTheme.borderPixel, width: 1),
                     ),
                     child: Text(
-                      '> $eventLog',
+                      eventLog!,
                       style: PixelTheme.pixelStyle(
                         fontSize: 6,
                         color: PixelTheme.textLight,

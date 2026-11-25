@@ -15,7 +15,6 @@ class ExplorationController extends ChangeNotifier {
   int currentRoomIndex;
 
   CombatEngine? activeCombat;
-  EquipmentItem? pendingScrapItem;
   String? lastEventLog;
 
   // Auto-Battler & Combat Animation State
@@ -103,7 +102,6 @@ class ExplorationController extends ChangeNotifier {
 
     _revealAdjacentRooms(currentFloorIndex, currentRoomIndex);
 
-    pendingScrapItem = null;
     isEnemyAggroed = false;
     isEnemyLyingOnGround = false;
     heroDamagePopup = null;
@@ -113,9 +111,12 @@ class ExplorationController extends ChangeNotifier {
     if (currentRoom.hasUnresolvedEnemy) {
       activeCombat = CombatEngine(player: player, enemy: currentRoom.enemy!);
       final enemy = currentRoom.enemy!;
-      lastEventLog = enemy.isBoss
-          ? '"Whoa... now that\'s a big problem. Steady, Vance."'
-          : _pickCombatBanter(targetFloor, targetRoom);
+      lastEventLog = pickCombatQuip(
+        1,
+        isBoss: enemy.isBoss,
+        isLowHp: player.currentHp <= (player.maxHp * 0.25).ceil(),
+        seed: targetFloor * 7 + targetRoom,
+      );
       startAutoCombat();
     } else {
       activeCombat = null;
@@ -199,6 +200,17 @@ class ExplorationController extends ChangeNotifier {
         activeCombat!.status == CombatStatus.inProgress) {
       if (_isProcessingRound) return;
       _isProcessingRound = true;
+
+      final nextRound = activeCombat!.roundCount + 1;
+      if (nextRound == 2 || nextRound == 3) {
+        lastEventLog = pickCombatQuip(
+          nextRound,
+          isBoss: activeCombat!.enemy.isBoss,
+          isLowHp: player.currentHp <= (player.maxHp * 0.25).ceil(),
+          seed: currentFloorIndex * 7 + currentRoomIndex,
+        );
+        notifyListeners();
+      }
 
       // Phase 1: Player's Turn anticipation
       await Future.delayed(const Duration(milliseconds: 1000));
@@ -332,83 +344,74 @@ class ExplorationController extends ChangeNotifier {
     final scrap = currentRoom.scrapPile!;
     scrap.isSearched = true;
     if (scrap.containedItem != null) {
-      pendingScrapItem = scrap.containedItem;
-      lastEventLog =
-          '"Jackpot. Looks like this ${pendingScrapItem!.name} still works."';
+      final item = scrap.containedItem!;
+      player.backpack.add(item);
+      lastEventLog = '"Found ${item.name}! Stuffed it into my backpack."';
+      _showTransientScrapBanner('+ ${item.name.toUpperCase()}');
     } else {
-      pendingScrapItem = null;
-      lastEventLog = null;
-      scrapBannerText = 'EMPTY JUNK';
-      Future.delayed(const Duration(milliseconds: 1500), () {
-        if (!_disposed && scrapBannerText == 'EMPTY JUNK') {
-          scrapBannerText = null;
-          notifyListeners();
-        }
-      });
+      lastEventLog = _pickEmptyScrapQuip(currentFloorIndex, currentRoomIndex);
+      _showTransientScrapBanner('EMPTY JUNK');
     }
     notifyListeners();
   }
 
-  String _pickCombatBanter(int floorIdx, int roomIdx) {
-    const quips = [
-      '"Great. Something else trying to eat me."',
-      '"Easy now... just me, my gun, and bad lighting."',
-      '"Stay sharp, Vance. Nobody\'s coming to bail you out."',
-      '"Looks angry. Let\'s make this quick."',
-    ];
-    return quips[(floorIdx * 7 + roomIdx) % quips.length];
-  }
-
-  void equipPendingItem() {
-    if (pendingScrapItem == null) return;
-    final item = pendingScrapItem!;
-
-    if (item.isWeapon) {
-      final old = player.equippedWeapon;
-      player.equippedWeapon = item;
-      player.gold += old.scrapValue;
-      lastEventLog =
-          'Equipped ${item.name}! Old weapon scrapped for +${old.scrapValue} Gold.';
-    } else if (item.isArmor) {
-      final old = player.equippedArmor;
-      player.equippedArmor = item;
-      player.gold += old.scrapValue;
-      lastEventLog =
-          'Equipped ${item.name}! Old armor scrapped for +${old.scrapValue} Gold.';
-    } else if (item.isConsumable) {
-      switch (item.consumableEffect) {
-        case ConsumableEffect.heal:
-          player.medkits++;
-          lastEventLog = 'Acquired Wasteland Trauma Medkit.';
-          break;
-        case ConsumableEffect.psycho:
-          player.psychoActive = true;
-          lastEventLog = 'Consumed Combat Psycho (+6 DMG).';
-          break;
-        case ConsumableEffect.stealth:
-          player.stealthboys++;
-          lastEventLog = 'Acquired Stealthboy Cloak Unit.';
-          break;
-        case ConsumableEffect.key:
-          player.keys++;
-          lastEventLog = 'Acquired Security Master Key.';
-          break;
-        default:
-          break;
+  void _showTransientScrapBanner(String text) {
+    scrapBannerText = text;
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (!_disposed && scrapBannerText == text) {
+        scrapBannerText = null;
+        notifyListeners();
       }
-    }
-
-    pendingScrapItem = null;
-    notifyListeners();
+    });
   }
 
-  void scrapPendingItem() {
-    if (pendingScrapItem == null) return;
-    final item = pendingScrapItem!;
-    player.gold += item.scrapValue;
-    lastEventLog = 'Dismantled ${item.name} for +${item.scrapValue} Gold.';
-    pendingScrapItem = null;
-    notifyListeners();
+  String _pickEmptyScrapQuip(int floorIdx, int roomIdx) {
+    const quips = [
+      '"Nothing but rusted tins and rat droppings."',
+      '"Picked clean already. Waste of time."',
+      '"Just bent metal and ash."',
+      '"Empty. Better luck in the next room."',
+    ];
+    return quips[(floorIdx * 5 + roomIdx) % quips.length];
+  }
+
+  String pickCombatQuip(
+    int round, {
+    required bool isBoss,
+    required bool isLowHp,
+    int seed = 0,
+  }) {
+    if (round <= 1) {
+      if (isBoss) {
+        return '"Whoa... now that\'s a big problem. Steady, Vance."';
+      }
+      const round1Quips = [
+        '"Great. Something else trying to eat me."',
+        '"Easy now... just me, my gun, and bad lighting."',
+        '"Stay sharp, Vance. Nobody\'s coming to bail you out."',
+        '"Looks angry. Let\'s make this quick."',
+      ];
+      return round1Quips[seed % round1Quips.length];
+    }
+
+    if (round == 2) {
+      if (isLowHp) {
+        return '"Bleeding out... need to end this fast!"';
+      }
+      const round2Quips = [
+        '"Tough bastard... keep firing!"',
+        '"Armor\'s taking hits—stay sharp!"',
+        '"Not going down without a fight, huh?"',
+      ];
+      return round2Quips[seed % round2Quips.length];
+    }
+
+    const round3Quips = [
+      '"Still standing?! Drop already!"',
+      '"This is taking too long... finish it!"',
+      '"Make every shot count, Vance!"',
+    ];
+    return round3Quips[seed % round3Quips.length];
   }
 
   void useMedkit() {
