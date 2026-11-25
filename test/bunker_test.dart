@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:overlord_2/data/vault_archive/item_database.dart';
+import 'package:overlord_2/domain/models.dart';
 import 'package:overlord_2/domain/vault_models.dart';
 import 'package:overlord_2/engine/bunker_manager.dart';
 
@@ -104,6 +105,39 @@ void main() {
       bunker.claimMedbay();
       expect(bunker.medbay.outputReady, isFalse);
       expect(bunker.getStashItemCount('c_medkit'), equals(medkitBefore + 2));
+    });
+
+    test('deployExpeditionScout equips best gear and completeExpedition banks loot and gold', () {
+      final initialCaps = bunker.caps;
+      final initialMeds = bunker.getStashItemCount('c_medkit');
+      final scout = bunker.deployExpeditionScout();
+
+      expect(scout.name, equals('Vance'));
+      expect(scout.medkits, equals(initialMeds));
+      expect(bunker.getStashItemCount('c_medkit'), equals(0));
+      expect(scout.equippedWeapon.name, isNotEmpty);
+
+      final loot = [
+        const EquipmentItem(
+          id: 'w_plasma_test',
+          name: 'Plasma Cutter',
+          type: ItemType.weapon,
+          minStat: 20,
+          maxStat: 30,
+          scrapValue: 15,
+        ),
+      ];
+
+      bunker.completeExpedition(
+        goldEarned: 125,
+        lootedItems: loot,
+        unusedMedkits: 1,
+        survived: true,
+      );
+
+      expect(bunker.caps, equals(initialCaps + 125));
+      expect(bunker.getStashItemCount('c_medkit'), equals(1));
+      expect(bunker.globalStash.any((i) => i.name == 'Plasma Cutter'), isTrue);
     });
   });
 }

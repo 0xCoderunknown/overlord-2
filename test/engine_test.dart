@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:overlord_2/data/game_database.dart';
 import 'package:overlord_2/domain/models.dart';
+import 'package:overlord_2/engine/banter_engine.dart';
 import 'package:overlord_2/engine/building_generator.dart';
 import 'package:overlord_2/engine/combat_engine.dart';
 import 'package:overlord_2/engine/exploration_controller.dart';
@@ -32,11 +33,11 @@ void main() {
         expect(floor.rooms[3].type, RoomType.elevator);
       }
 
-      // Top floor should have a boss chamber at column 2 (elevatorColumn - 1)
+      // Top floor should have a boss chamber at column 0 (furthest room from elevator)
       final topFloor = building.floors[2];
-      expect(topFloor.rooms[2].type, RoomType.bossChamber);
-      expect(topFloor.rooms[2].enemy, isNotNull);
-      expect(topFloor.rooms[2].enemy!.isBoss, isTrue);
+      expect(topFloor.rooms[0].type, RoomType.bossChamber);
+      expect(topFloor.rooms[0].enemy, isNotNull);
+      expect(topFloor.rooms[0].enemy!.isBoss, isTrue);
 
       // Ground entrance room is active with ambient lore
       expect(building.floors[0].rooms[0].state, RoomState.active);
@@ -175,10 +176,37 @@ void main() {
       expect(controller.scrapBannerText, 'EMPTY JUNK');
     });
 
-    test('combat banter produces distinct lines across rounds 1 to 3 and tracks roundCount', () {
+    test('BanterEngine produces two-way exchanges for animals, humans, bosses, and tracks roundCount', () {
+      final rat = Enemy(name: 'Mutated Rat', maxHp: 16, minDamage: 2, maxDamage: 6);
+      final raider = Enemy(name: 'Raider Enforcer', maxHp: 38, minDamage: 8, maxDamage: 14);
+      final boss = Enemy(name: 'Pre-War Battlemech', maxHp: 90, minDamage: 18, maxDamage: 28, isBoss: true);
+
+      final animalEx1 = BanterEngine.buildExchange(enemy: rat, round: 1, isLowHp: false, seed: 1);
+      final animalEx2 = BanterEngine.buildExchange(enemy: rat, round: 2, isLowHp: false, seed: 1);
+      final animalEx3 = BanterEngine.buildExchange(enemy: rat, round: 3, isLowHp: false, seed: 1);
+      expect(animalEx1.enemyLine, '.....');
+      expect({animalEx1.heroLine, animalEx2.heroLine, animalEx3.heroLine}.length, 3);
+
+      final humanEx = BanterEngine.buildExchange(enemy: raider, round: 1, isLowHp: false, seed: 0);
+      expect(humanEx.enemyLine, isNot('.....'));
+      expect(humanEx.heroLine, isNotEmpty);
+
+      final bossLowEx = BanterEngine.buildExchange(enemy: boss, round: 2, isLowHp: true, seed: 0);
+      expect(bossLowEx.heroLine, contains('Bleeding'));
+
+      final player = ScoutCharacter(name: 'Vance');
+      final combat = CombatEngine(player: player, enemy: Enemy(name: 'Scrapper', maxHp: 100, minDamage: 1, maxDamage: 2), random: Random(7));
+      expect(combat.roundCount, 0);
+      combat.executeRound();
+      expect(combat.roundCount, 1);
+      combat.executeRound();
+      expect(combat.roundCount, 2);
+    });
+
+    test('equipFromBackpack swaps gear and resolveRoomEvent unlocks safe with key and medCabinet', () {
       final building = Building(
-        id: 'b_banter',
-        name: 'Test Banter',
+        id: 'b_events',
+        name: 'Test Events',
         floors: [
           Floor(
             floorIndex: 0,
@@ -190,29 +218,134 @@ void main() {
                 contentType: ContentType.empty,
                 state: RoomState.active,
               ),
+              Room(
+                floorIndex: 0,
+                roomIndex: 1,
+                type: RoomType.office,
+                contentType: ContentType.empty,
+                state: RoomState.outline,
+                eventType: RoomEventType.lockedSafe,
+              ),
+              Room(
+                floorIndex: 0,
+                roomIndex: 2,
+                type: RoomType.clinic,
+                contentType: ContentType.empty,
+                state: RoomState.outline,
+                eventType: RoomEventType.medCabinet,
+              ),
             ],
           ),
         ],
       );
 
-      final player = ScoutCharacter(name: 'Vance');
+      final player = ScoutCharacter(name: 'Vance', keys: 1, medkits: 1);
+      final oldWpnName = player.equippedWeapon.name;
+      player.backpack.add(
+        const EquipmentItem(
+          id: 'w_rifle',
+          name: 'Service Rifle',
+          type: ItemType.weapon,
+          minStat: 16,
+          maxStat: 26,
+          scrapValue: 10,
+        ),
+      );
+
       final controller = ExplorationController(building: building, player: player);
 
-      final line1 = controller.pickCombatQuip(1, isBoss: false, isLowHp: false, seed: 1);
-      final line2 = controller.pickCombatQuip(2, isBoss: false, isLowHp: false, seed: 1);
-      final line2Low = controller.pickCombatQuip(2, isBoss: false, isLowHp: true, seed: 1);
-      final line3 = controller.pickCombatQuip(3, isBoss: false, isLowHp: false, seed: 1);
+      // Swap weapon from backpack
+      controller.equipFromBackpack(0);
+      expect(player.equippedWeapon.name, 'Service Rifle');
+      expect(player.backpack.first.name, oldWpnName);
 
-      expect({line1, line2, line3}.length, 3);
-      expect(line2Low, isNot(equals(line2)));
+      // Unlock safe with key
+      controller.moveTo(0, 1);
+      expect(controller.currentRoom.hasUnresolvedEvent, isTrue);
+      controller.resolveRoomEvent(useKey: true);
+      expect(player.keys, 0);
+      expect(player.gold, 15);
+      expect(controller.currentRoom.hasUnresolvedEvent, isFalse);
 
-      final enemy = Enemy(name: 'Scrapper', maxHp: 100, minDamage: 1, maxDamage: 2);
-      final combat = CombatEngine(player: player, enemy: enemy, random: Random(7));
-      expect(combat.roundCount, 0);
-      combat.executeRound();
-      expect(combat.roundCount, 1);
-      combat.executeRound();
-      expect(combat.roundCount, 2);
+      // Med cabinet grants medkit + crafting material
+      controller.moveTo(0, 2);
+      final bagBefore = player.backpack.length;
+      controller.resolveRoomEvent();
+      expect(player.medkits, 2);
+      expect(player.backpack.length, bagBefore + 1);
+      expect(
+        player.backpack.last.consumableEffect,
+        ConsumableEffect.material,
+      );
+      expect(controller.currentRoom.hasUnresolvedEvent, isFalse);
+    });
+
+    test('useStealthboy bypasses non-boss hostile room and unlocks adjacent rooms', () {
+      final grunt = Enemy(
+        name: 'Raider Enforcer',
+        maxHp: 38,
+        minDamage: 8,
+        maxDamage: 14,
+      );
+      final boss = Enemy(
+        name: 'Featherless Turkey',
+        maxHp: 75,
+        minDamage: 16,
+        maxDamage: 24,
+        isBoss: true,
+      );
+      final building = Building(
+        id: 'b_stealth',
+        name: 'Test Stealth',
+        floors: [
+          Floor(
+            floorIndex: 0,
+            rooms: [
+              Room(
+                floorIndex: 0,
+                roomIndex: 0,
+                type: RoomType.entrance,
+                contentType: ContentType.empty,
+                state: RoomState.active,
+              ),
+              Room(
+                floorIndex: 0,
+                roomIndex: 1,
+                type: RoomType.corridor,
+                contentType: ContentType.enemy,
+                state: RoomState.outline,
+                enemy: grunt,
+              ),
+              Room(
+                floorIndex: 0,
+                roomIndex: 2,
+                type: RoomType.bossChamber,
+                contentType: ContentType.enemy,
+                state: RoomState.unrevealed,
+                enemy: boss,
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final player = ScoutCharacter(name: 'Vance', stealthboys: 2);
+      final controller = ExplorationController(building: building, player: player);
+
+      controller.moveTo(0, 1);
+      expect(controller.canUseStealthboy, isTrue);
+      controller.useStealthboy();
+
+      expect(player.stealthboys, 1);
+      expect(controller.activeCombat, isNull);
+      expect(controller.currentRoom.isBypassed, isTrue);
+      expect(controller.currentRoom.state, RoomState.cleared);
+      expect(building.floors[0].rooms[2].state, RoomState.outline);
+
+      // Cannot stealth past Apex Boss
+      controller.moveTo(0, 2);
+      expect(controller.canUseStealthboy, isFalse);
+      controller.dispose();
     });
 
     test('ambient lore is displayed when moving into empty rooms', () {

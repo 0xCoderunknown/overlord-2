@@ -1,5 +1,6 @@
 import 'dart:math';
 import '../data/game_database.dart';
+import '../data/vault_archive/lore_database.dart';
 import '../domain/models.dart';
 
 class BuildingGenerator {
@@ -13,6 +14,7 @@ class BuildingGenerator {
     int floorCount = 3,
     int roomsPerFloor = 4,
     int elevatorColumn = 3,
+    int bountyMultiplier = 1,
   }) {
     final floors = <Floor>[];
 
@@ -54,9 +56,10 @@ class BuildingGenerator {
           continue;
         }
 
-        // Apex Boss Chamber on top floor right before elevator
-        if (isTopFloor && r == elevatorColumn - 1) {
-          final boss = _rollBoss();
+        // Apex Boss Chamber on top floor furthest from the elevator (r == 0 when elevator is on right)
+        final bossCol = elevatorColumn == 0 ? roomsPerFloor - 1 : 0;
+        if (isTopFloor && r == bossCol) {
+          final boss = _rollBoss(bountyMultiplier: bountyMultiplier);
           rooms.add(Room(
             floorIndex: f,
             roomIndex: r,
@@ -75,16 +78,29 @@ class BuildingGenerator {
         Enemy? enemy;
         ScrapPile? scrapPile;
         String? ambient;
+        RoomEventType eventType = RoomEventType.none;
 
         if (roll < 45) {
           contentType = ContentType.enemy;
-          enemy = _rollEnemyForFloor(f);
+          enemy = _rollEnemyForFloor(f, bountyMultiplier: bountyMultiplier);
         } else if (roll < 70) {
           contentType = ContentType.scrap;
           scrapPile = generateScrapPile(f);
         } else {
           contentType = ContentType.empty;
-          ambient = GameDatabase.emptyRoomLore[rng.nextInt(GameDatabase.emptyRoomLore.length)];
+          final allLore = [
+            ...GameDatabase.emptyRoomLore,
+            ...passiveLore.map((lines) => lines.join(' ')),
+          ];
+          ambient = '"${allLore[rng.nextInt(allLore.length)]}"';
+          final evRoll = rng.nextInt(100);
+          if (type == RoomType.clinic && evRoll < 40) {
+            eventType = RoomEventType.medCabinet;
+          } else if (evRoll < 25) {
+            eventType = RoomEventType.lockedSafe;
+          } else if (evRoll < 42) {
+            eventType = RoomEventType.tripwire;
+          }
         }
 
         rooms.add(Room(
@@ -96,6 +112,7 @@ class BuildingGenerator {
           enemy: enemy,
           scrapPile: scrapPile,
           ambientLore: ambient,
+          eventType: eventType,
         ));
       }
       floors.add(Floor(floorIndex: f, rooms: rooms));
@@ -113,7 +130,7 @@ class BuildingGenerator {
     );
   }
 
-  Enemy _rollEnemyForFloor(int floorIndex) {
+  Enemy _rollEnemyForFloor(int floorIndex, {int bountyMultiplier = 1}) {
     List<Enemy> pool;
     if (floorIndex == 0) {
       pool = GameDatabase.getTier1Enemies();
@@ -129,13 +146,13 @@ class BuildingGenerator {
       maxHp: template.maxHp,
       minDamage: template.minDamage,
       maxDamage: template.maxDamage,
-      bountyGold: template.bountyGold,
+      bountyGold: template.bountyGold * bountyMultiplier,
       isBoss: template.isBoss,
       description: template.description,
     );
   }
 
-  Enemy _rollBoss() {
+  Enemy _rollBoss({int bountyMultiplier = 1}) {
     final bosses = GameDatabase.getApexBosses();
     final template = bosses[rng.nextInt(bosses.length)];
     return Enemy(
@@ -143,7 +160,7 @@ class BuildingGenerator {
       maxHp: template.maxHp,
       minDamage: template.minDamage,
       maxDamage: template.maxDamage,
-      bountyGold: template.bountyGold,
+      bountyGold: template.bountyGold * bountyMultiplier,
       isBoss: true,
       description: template.description,
     );
@@ -164,20 +181,31 @@ class BuildingGenerator {
     );
   }
 
+  EquipmentItem rollSafeLoot(int floorIndex) {
+    return _rollScrapItem(min(2, floorIndex + 1));
+  }
+
+  EquipmentItem rollCraftingMaterial() {
+    final mats = GameDatabase.craftingMaterials;
+    return mats[rng.nextInt(mats.length)];
+  }
+
   EquipmentItem _rollScrapItem(int floorIndex) {
     final roll = rng.nextInt(100);
     final tier = min(3, floorIndex + 1);
 
-    // 40% Weapon, 30% Armor, 30% Consumable
-    if (roll < 40) {
+    // 35% Weapon, 25% Armor, 20% Consumable, 20% Medbay Material
+    if (roll < 35) {
       final weapons = GameDatabase.getWeaponsByTier(tier);
       return weapons[rng.nextInt(weapons.length)];
-    } else if (roll < 70) {
+    } else if (roll < 60) {
       final armors = GameDatabase.getArmorsByTier(tier);
       return armors[rng.nextInt(armors.length)];
-    } else {
+    } else if (roll < 80) {
       final consumables = GameDatabase.consumables;
       return consumables[rng.nextInt(consumables.length)];
+    } else {
+      return rollCraftingMaterial();
     }
   }
 }

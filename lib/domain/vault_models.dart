@@ -115,6 +115,50 @@ class Item {
       description: description ?? '',
     );
   }
+
+  /// Converter from Overlord 2's EquipmentItem back into Vault Armory Item
+  factory Item.fromEquipmentItem(EquipmentItem eq) {
+    final String typeStr;
+    final String img;
+    final bool stackable;
+
+    if (eq.isWeapon) {
+      typeStr = 'weapon';
+      img = eq.maxStat >= 16
+          ? 'assets/images/items/weapon.png'
+          : 'assets/images/items/pistol.png';
+      stackable = false;
+    } else if (eq.isArmor) {
+      typeStr = 'armor';
+      img = eq.maxStat >= 12
+          ? 'assets/images/items/vest_2.png'
+          : 'assets/images/items/vest.png';
+      stackable = false;
+    } else if (eq.consumableEffect == ConsumableEffect.material) {
+      typeStr = 'material';
+      img = 'assets/images/items/medkit.png';
+      stackable = true;
+    } else {
+      typeStr = 'consumable';
+      img = 'assets/images/items/medkit.png';
+      stackable = true;
+    }
+
+    final int tierVal = eq.maxStat >= 20 ? 3 : (eq.maxStat >= 12 ? 2 : 1);
+
+    return Item(
+      id: eq.id,
+      name: eq.name,
+      value: max(10, eq.scrapValue * 10),
+      isStackable: stackable,
+      type: typeStr,
+      tier: tierVal,
+      minStat: eq.minStat,
+      maxStat: eq.maxStat,
+      description: eq.description,
+      imagePath: img,
+    );
+  }
 }
 
 class Scavenger {

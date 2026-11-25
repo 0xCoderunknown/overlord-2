@@ -1,5 +1,7 @@
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import '../data/vault_archive/item_database.dart';
+import '../domain/models.dart';
 import '../domain/vault_models.dart';
 
 class BunkerManager extends ChangeNotifier {
@@ -178,6 +180,61 @@ class BunkerManager extends ChangeNotifier {
     addItemToStash(Item.fromDatabase(medkitData, quantity: 2));
     medbay.isCrafting = false;
     medbay.outputReady = false;
+    notifyListeners();
+  }
+
+  Item? getBestStashWeapon() {
+    final weapons = globalStash.where((i) => i.type == 'weapon').toList();
+    if (weapons.isEmpty) return null;
+    weapons.sort((a, b) => (b.maxStat ?? 0).compareTo(a.maxStat ?? 0));
+    return weapons.first;
+  }
+
+  Item? getBestStashArmor() {
+    final armors = globalStash.where((i) => i.type == 'armor').toList();
+    if (armors.isEmpty) return null;
+    armors.sort((a, b) => (b.maxStat ?? 0).compareTo(a.maxStat ?? 0));
+    return armors.first;
+  }
+
+  /// Equips Vance from the Vault Armory and withdraws up to 3 Medkits for an expedition.
+  ScoutCharacter deployExpeditionScout() {
+    final bestWeapon = getBestStashWeapon()?.toEquipmentItem();
+    final bestArmor = getBestStashArmor()?.toEquipmentItem();
+    final availableMeds = getStashItemCount('c_medkit');
+    final deployMeds = min(3, availableMeds);
+
+    if (deployMeds > 0) {
+      _consumeStashItem('c_medkit', deployMeds);
+    }
+
+    final name = roster.isNotEmpty ? roster.first.name : 'Vance';
+    return ScoutCharacter(
+      name: name,
+      medkits: max(1, deployMeds),
+      starterWeapon: bestWeapon,
+      starterArmor: bestArmor,
+    );
+  }
+
+  /// Banks extracted Gold into Caps, transfers backpack salvage into Armory Stash, and returns unused Medkits.
+  void completeExpedition({
+    required int goldEarned,
+    required List<EquipmentItem> lootedItems,
+    required int unusedMedkits,
+    required bool survived,
+  }) {
+    if (survived) {
+      caps += goldEarned;
+      for (final eq in lootedItems) {
+        addItemToStash(Item.fromEquipmentItem(eq));
+      }
+      if (unusedMedkits > 0) {
+        final medkitData =
+            ItemDatabase.consumables.firstWhere((c) => c['id'] == 'c_medkit');
+        addItemToStash(Item.fromDatabase(medkitData, quantity: unusedMedkits));
+      }
+    }
     notifyListeners();
   }
 }

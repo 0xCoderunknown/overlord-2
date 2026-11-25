@@ -5,6 +5,7 @@ import '../../engine/bunker_manager.dart';
 import '../screens/expedition_screen.dart';
 import '../widgets/terminal/terminal_button.dart';
 import '../widgets/terminal/terminal_container.dart';
+import 'contract_picker_dialog.dart';
 import 'facility_screen.dart';
 import 'market_screen.dart';
 import 'stash_screen.dart';
@@ -127,8 +128,21 @@ class _OverseerScreenState extends State<OverseerScreen> {
                 backgroundColor: PixelTheme.neonGreen,
                 padding: 14,
                 onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ExpeditionScreen()),
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => ContractPickerDialog(
+                      onSelect: (contract) {
+                        Navigator.of(ctx).pop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ExpeditionScreen(
+                              bunkerManager: _bunker,
+                              contract: contract,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   );
                 },
               ),
@@ -205,35 +219,54 @@ class _OverseerScreenState extends State<OverseerScreen> {
                       ),
                       const SizedBox(width: 14),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'SCOUT VANCE (TIER 1 INFILTRATOR)',
-                              style: AppTheme.retroText(
-                                fontSize: 13,
-                                color: PixelTheme.neonGreen,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'STATUS: READY FOR BREACH | VITALS: 100/100 HP',
-                              style: AppTheme.retroText(
-                                fontSize: 10,
-                                color: AppTheme.white.withValues(alpha: 0.8),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'EQUIPPED: PIPE PISTOL (6-12) & PHONEBOOK (2-4 DR)',
-                              style: AppTheme.retroText(
-                                fontSize: 9,
-                                color: PixelTheme.textMuted,
-                              ),
-                            ),
-                          ],
+                        child: Builder(
+                          builder: (context) {
+                            final scout = _bunker.roster.isNotEmpty
+                                ? _bunker.roster.first
+                                : null;
+                            final bestWpn = _bunker.getBestStashWeapon();
+                            final bestArm = _bunker.getBestStashArmor();
+                            final medCount = _bunker.getStashItemCount('c_medkit');
+                            final wpnLabel = bestWpn != null
+                                ? '${bestWpn.name.toUpperCase()} (${bestWpn.minStat}-${bestWpn.maxStat})'
+                                : 'PIPE PISTOL (6-12)';
+                            final armLabel = bestArm != null
+                                ? '${bestArm.name.toUpperCase()} (${bestArm.minStat}-${bestArm.maxStat} DR)'
+                                : 'PHONEBOOK (2-4 DR)';
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'SCOUT ${(scout?.name ?? 'VANCE').toUpperCase()} (TIER 1 INFILTRATOR)',
+                                  style: AppTheme.retroText(
+                                    fontSize: 13,
+                                    color: PixelTheme.neonGreen,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'STATUS: READY FOR BREACH | VITALS: ${scout?.hp ?? 100}/${scout?.maxHp ?? 100} HP | MEDS: $medCount',
+                                  style: AppTheme.retroText(
+                                    fontSize: 10,
+                                    color: AppTheme.white.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'LOADOUT: $wpnLabel & $armLabel',
+                                  style: AppTheme.retroText(
+                                    fontSize: 9,
+                                    color: PixelTheme.textMuted,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ],

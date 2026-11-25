@@ -275,6 +275,63 @@ class GameDatabase {
     ),
   ];
 
+  static const List<EquipmentItem> craftingMaterials = [
+    EquipmentItem(
+      id: 'med_syringe',
+      name: 'Used Syringe',
+      type: ItemType.consumable,
+      consumableEffect: ConsumableEffect.material,
+      scrapValue: 1,
+      description: 'Medical salvage used in Medbay Medkit synthesis.',
+    ),
+    EquipmentItem(
+      id: 'med_herb',
+      name: 'Irradiated Herb',
+      type: ItemType.consumable,
+      consumableEffect: ConsumableEffect.material,
+      scrapValue: 2,
+      description: 'Medicinal flora used in Medbay Medkit synthesis.',
+    ),
+    EquipmentItem(
+      id: 'chem_expired',
+      name: 'Expired Chemicals',
+      type: ItemType.consumable,
+      consumableEffect: ConsumableEffect.material,
+      scrapValue: 3,
+      description: 'Pre-war reagents used in Medbay Medkit synthesis.',
+    ),
+  ];
+
+  static const List<ExpeditionContract> contracts = [
+    ExpeditionContract(
+      id: 'contract_clinic',
+      title: 'ABANDONED CLINIC',
+      subtitle: '2 Floors • Low Hazard • Standard Bounty',
+      floorCount: 2,
+      roomsPerFloor: 4,
+      bountyMultiplier: 1,
+      hazardLevel: 1,
+    ),
+    ExpeditionContract(
+      id: 'contract_depot',
+      title: 'INDUSTRIAL DEPOT',
+      subtitle: '3 Floors • Moderate Hazard • Rich Salvage',
+      floorCount: 3,
+      roomsPerFloor: 4,
+      bountyMultiplier: 1,
+      hazardLevel: 2,
+    ),
+    ExpeditionContract(
+      id: 'contract_blacksite',
+      title: 'BLACK-SITE BUNKER',
+      subtitle: '4 Floors • Lethal Threats • 2x Bounty Payout',
+      floorCount: 4,
+      roomsPerFloor: 4,
+      bountyMultiplier: 2,
+      hazardLevel: 3,
+    ),
+  ];
+
   // -------------------------------------------------------------
   // ATMOSPHERIC EMPTY-ROOM LORE (FALLOUT, STALKER, RE, DARK SOULS)
   // -------------------------------------------------------------

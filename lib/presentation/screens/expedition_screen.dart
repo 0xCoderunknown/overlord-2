@@ -1,14 +1,22 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/pixel_theme.dart';
+import '../../data/game_database.dart';
 import '../../domain/models.dart';
 import '../../engine/building_generator.dart';
+import '../../engine/bunker_manager.dart';
 import '../../engine/exploration_controller.dart';
+import '../widgets/backpack_sheet.dart';
+import '../widgets/expedition_bottom_bar.dart';
 import '../widgets/pixel_hud.dart';
-import '../widgets/pixel_room_view.dart';
+import '../widgets/room/pixel_room_view.dart';
+import '../widgets/terminal/event_modal.dart';
 
 class ExpeditionScreen extends StatefulWidget {
-  const ExpeditionScreen({super.key});
+  final BunkerManager? bunkerManager;
+  final ExpeditionContract? contract;
+
+  const ExpeditionScreen({super.key, this.bunkerManager, this.contract});
 
   @override
   State<ExpeditionScreen> createState() => _ExpeditionScreenState();
@@ -24,13 +32,17 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
   }
 
   void _startNewExpedition() {
+    final activeContract = widget.contract ?? GameDatabase.contracts[1];
     final generator = BuildingGenerator();
     final building = generator.generateBuilding(
-      floorCount: 3,
-      roomsPerFloor: 4,
-      elevatorColumn: 3,
+      name: activeContract.title,
+      floorCount: activeContract.floorCount,
+      roomsPerFloor: activeContract.roomsPerFloor,
+      elevatorColumn: activeContract.roomsPerFloor - 1,
+      bountyMultiplier: activeContract.bountyMultiplier,
     );
-    final player = ScoutCharacter(name: 'Vance');
+    final player = widget.bunkerManager?.deployExpeditionScout() ??
+        ScoutCharacter(name: 'Vance');
 
     _controller = ExplorationController(
       building: building,
@@ -38,6 +50,21 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
       buildingGenerator: generator,
     );
     _controller.addListener(_onControllerUpdate);
+  }
+
+  void _extractToBunker() {
+    final player = _controller.player;
+    widget.bunkerManager?.completeExpedition(
+      goldEarned: player.gold,
+      lootedItems: player.backpack,
+      unusedMedkits: player.medkits,
+      survived: true,
+    );
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      _restart();
+    }
   }
 
   void _onControllerUpdate() {
@@ -48,6 +75,66 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
   void dispose() {
     _controller.removeListener(_onControllerUpdate);
     super.dispose();
+  }
+
+  void _openBackpack() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => BackpackSheet(
+        player: _controller.player,
+        onUseOrEquip: (idx) => _controller.equipFromBackpack(idx),
+      ),
+    );
+  }
+
+  void _openRoomEventModal() {
+    final room = _controller.currentRoom;
+    if (!room.hasUnresolvedEvent) return;
+
+    if (room.eventType == RoomEventType.medCabinet) {
+      showDialog(
+        context: context,
+        builder: (ctx) => EventModal(
+          title: 'MEDICAL CABINET',
+          message: 'An intact pre-war trauma cabinet hangs on the wall.',
+          confirmText: 'SCAVENGE CABINET',
+          cancelText: 'LEAVE',
+          accentColor: PixelTheme.elevatorCyan,
+          onConfirm: () {
+            Navigator.of(ctx).pop();
+            _controller.resolveRoomEvent();
+          },
+          onCancel: () => Navigator.of(ctx).pop(),
+        ),
+      );
+    } else if (room.eventType == RoomEventType.lockedSafe) {
+      final hasKey = _controller.player.keys > 0;
+      showDialog(
+        context: context,
+        builder: (ctx) => EventModal(
+          title: 'SEALED FLOOR SAFE',
+          message: hasKey
+              ? 'Heavy steel safe. Use 1 Master Key for guaranteed Tier 2-3 salvage, or force it open at your own risk.'
+              : 'Heavy steel safe. No Master Keys left—you can try forcing the latch open (50% trap risk).',
+          confirmText: hasKey
+              ? 'USE MASTER KEY (${_controller.player.keys})'
+              : 'FORCE LOCK (RISKY)',
+          cancelText: hasKey ? 'FORCE LOCK (RISKY)' : 'LEAVE',
+          accentColor: PixelTheme.warningAmber,
+          onConfirm: () {
+            Navigator.of(ctx).pop();
+            _controller.resolveRoomEvent(useKey: hasKey);
+          },
+          onCancel: () {
+            Navigator.of(ctx).pop();
+            if (hasKey) {
+              _controller.resolveRoomEvent(useKey: false);
+            }
+          },
+        ),
+      );
+    }
   }
 
   void _restart() {
@@ -100,8 +187,43 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                         roomIndex: _controller.currentRoomIndex,
                       ),
                       Expanded(child: _buildBuildingViewport()),
+                      ExpeditionBottomBar(
+                        player: player,
+                        canExtract: _controller.canExtract,
+                        onTapBackpack: _openBackpack,
+                        onTapMedkit: () => _controller.useMedkit(),
+                        onTapExtract: _extractToBunker,
+                      ),
                     ],
                   ),
+            if (_controller.isBossIntroActive)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: PixelTheme.alertRed, width: 4),
+                      color: PixelTheme.alertRed.withValues(alpha: 0.12),
+                    ),
+                    alignment: Alignment.topCenter,
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
+                      color: PixelTheme.alertRed,
+                      child: Text(
+                        '⚠ APEX THREAT DETECTED ⚠',
+                        style: PixelTheme.pixelStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: PixelTheme.roomVoid,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -178,10 +300,13 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                     isHeroLyingOnGround: _controller.isHeroLyingOnGround,
                     scrapBannerText: isActive ? _controller.scrapBannerText : null,
                     eventLog: isActive ? _controller.lastEventLog : null,
+                    banter: isActive ? _controller.activeBanter : null,
                     onTapRoom: () =>
                         _controller.moveTo(room.floorIndex, room.roomIndex),
                     onHeal: () => _controller.useMedkit(),
                     onSearchScrap: () => _controller.searchScrapPile(),
+                    onTriggerEvent: _openRoomEventModal,
+                    onStealth: () => _controller.useStealthboy(),
                   );
                 }),
               ],
@@ -239,9 +364,24 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                   vertical: 12,
                 ),
               ),
-              onPressed: _restart,
+              onPressed: () {
+                if (widget.bunkerManager != null &&
+                    Navigator.of(context).canPop()) {
+                  widget.bunkerManager!.completeExpedition(
+                    goldEarned: 0,
+                    lootedItems: const [],
+                    unusedMedkits: 0,
+                    survived: false,
+                  );
+                  Navigator.of(context).pop();
+                } else {
+                  _restart();
+                }
+              },
               child: Text(
-                'DEPLOY NEW SQUAD',
+                widget.bunkerManager != null
+                    ? 'RETURN TO BUNKER'
+                    : 'DEPLOY NEW SQUAD',
                 style: PixelTheme.pixelStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,

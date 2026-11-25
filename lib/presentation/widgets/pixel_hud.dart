@@ -16,6 +16,10 @@ class PixelHud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hpColor = player.currentHp <= (player.maxHp * 0.25).ceil()
+        ? PixelTheme.alertRed
+        : PixelTheme.neonGreen;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: const BoxDecoration(
@@ -40,6 +44,15 @@ class PixelHud extends StatelessWidget {
                       color: PixelTheme.neonGreen,
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${player.currentHp}/${player.maxHp} HP',
+                    style: PixelTheme.pixelStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: hpColor,
+                    ),
+                  ),
                   if (player.psychoActive) ...[
                     const SizedBox(width: 6),
                     Container(
@@ -60,7 +73,7 @@ class PixelHud extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'GOLD: ${player.gold}',
+                    'CAPS: ${player.gold}',
                     style: PixelTheme.pixelStyle(
                       fontSize: 10,
                       color: PixelTheme.chestGold,
@@ -69,25 +82,16 @@ class PixelHud extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'MEDS: ${player.medkits}',
+                    'KEYS: ${player.keys}',
                     style: PixelTheme.pixelStyle(
                       fontSize: 10,
-                      color: PixelTheme.elevatorCyan,
+                      color: PixelTheme.warningAmber,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'BAG: ${player.backpack.length}',
-                    style: PixelTheme.pixelStyle(
-                      fontSize: 10,
-                      color: PixelTheme.neonGreen,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'L${floorIndex + 1}:R${roomIndex + 1}',
+                    'F${floorIndex + 1}:R${roomIndex + 1}',
                     style: PixelTheme.pixelStyle(
                       fontSize: 10,
                       color: PixelTheme.textMuted,
@@ -99,7 +103,6 @@ class PixelHud extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 5),
-          // Equipped gear tags
           Row(
             children: [
               Expanded(

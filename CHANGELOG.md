@@ -6,6 +6,38 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
 
 ---
 
+## [0.0.5] - 25-11-2026
+
+### 🏛️ Complete Bunker ↔ Expedition Loop & Contracts
+- **3-Tier Infiltration Contracts (`ContractPickerDialog`):**
+  - Launching an expedition from `OverseerScreen` now offers 3 contracts: **Abandoned Clinic** (2 Floors), **Industrial Depot** (3 Floors), and **Black-Site Bunker** (4 Floors, 2x Bounty Payout).
+- **Live Loadout Deployment & Extraction:**
+  - Vance deploys directly with the Vault Armory's best weapon, armor, and Medkits, and `OverseerScreen` displays live loadout & vitals.
+  - Defeating the top-floor Boss (or returning to the Ground Airlock with spoils) unlocks **Extract**, banking earned Caps, scavenged backpack loot, and unused Medkits back into `StashScreen`.
+  - Flatlining returns to the Bunker with unbanked expedition loot lost.
+
+### 🎒 Tactical Dock, Visual Backpack & Stealthboy Bypass
+- **Expedition Bottom Bar (`ExpeditionBottomBar`):**
+  - Replaced cramped HUD chips with a dedicated bottom tactical dock featuring **BACKPACK (N)**, **MED (N)**, and **EXTRACT**.
+- **Upgraded Visual Backpack (`BackpackSheet`):**
+  - Displays Vance's `[ EQUIPPED ]` Weapon & Armor sprite cards alongside a 2-column `ItemGridCard` grid for live mid-run gear swapping and consumable use.
+- **Stealthboy Cloak Bypass:**
+  - Added an in-room **STEALTH** button allowing Vance to slip past non-boss enemies without combat and reveal adjacent rooms.
+
+### 🗝️ Room Events, Traps, Medbay Drops & Boss Polish
+- **Interactive Safes, Med Cabinets & Tripwires (`EventModal`):**
+  - Empty rooms now seed sealed **Floor Safes** (unlockable with Master Keys or risky lock-forcing), **Medical Cabinets** (dropping Medkits + Medbay crafting materials: *Used Syringes*, *Irradiated Herbs*, *Expired Chemicals*), and armor-mitigated **Tripwire Traps**.
+  - Expanded empty-room atmosphere with Overlord 1's `passiveLore` pool.
+- **Apex Boss Placement & Intro Alert:**
+  - Moved the Apex Boss Chamber to the top-floor room **furthest from the elevator** (`col 0`) so it is reached last.
+  - Added a crimson `⚠ APEX THREAT DETECTED ⚠` alert pulse when breaching the Boss Chamber, and removed `CLEARED` floor clutter.
+
+### 💬 Two-Way Combat Banter
+- **Call-and-Response Combat Dialogue (`BanterEngine`):**
+  - Combat dialogue now goes both ways across Rounds 1–3: human raiders, security drones, and bosses trade back-and-forth taunts with Vance, while animals (including the **Featherless Turkey**) speak `"....."` with confused or joking replies from Vance.
+
+---
+
 ## [0.0.4] - 25-11-2026
 
 ### ⚔️ In-Room Combat & HUD Polish

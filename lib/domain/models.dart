@@ -26,6 +26,13 @@ enum ContentType {
   elevator,
 }
 
+enum RoomEventType {
+  none,
+  lockedSafe,
+  medCabinet,
+  tripwire,
+}
+
 enum ItemType {
   weapon,
   armor,
@@ -37,6 +44,27 @@ enum ConsumableEffect {
   psycho,
   stealth,
   key,
+  material,
+}
+
+class ExpeditionContract {
+  final String id;
+  final String title;
+  final String subtitle;
+  final int floorCount;
+  final int roomsPerFloor;
+  final int bountyMultiplier;
+  final int hazardLevel;
+
+  const ExpeditionContract({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.floorCount,
+    required this.roomsPerFloor,
+    this.bountyMultiplier = 1,
+    this.hazardLevel = 1,
+  });
 }
 
 class EquipmentItem {
@@ -192,6 +220,9 @@ class Room {
   final Enemy? enemy;
   ScrapPile? scrapPile;
   String? ambientLore;
+  RoomEventType eventType;
+  bool isEventResolved;
+  bool isBypassed;
 
   Room({
     required this.floorIndex,
@@ -202,11 +233,17 @@ class Room {
     this.enemy,
     this.scrapPile,
     this.ambientLore,
+    this.eventType = RoomEventType.none,
+    this.isEventResolved = false,
+    this.isBypassed = false,
   });
 
   bool get isElevator => type == RoomType.elevator;
-  bool get hasUnresolvedEnemy => enemy != null && !enemy!.isDead;
+  bool get hasUnresolvedEnemy =>
+      enemy != null && !enemy!.isDead && !isBypassed;
   bool get hasUnsearchedScrap => scrapPile != null && !scrapPile!.isSearched;
+  bool get hasUnresolvedEvent =>
+      eventType != RoomEventType.none && !isEventResolved;
 }
 
 class Floor {

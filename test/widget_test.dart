@@ -18,15 +18,20 @@ void main() {
     expect(find.text('ARMORY STASH'), findsOneWidget);
     expect(find.text('MEDBAY'), findsOneWidget);
 
-    // Tap Launch Expedition
+    // Tap Launch Expedition -> opens Contract Picker
     final launchButton = find.text('>> LAUNCH FACILITY EXPEDITION <<');
     expect(launchButton, findsOneWidget);
     await tester.tap(launchButton);
     await tester.pumpAndSettle();
 
-    // Verify Expedition screen is launched
+    expect(find.text('SELECT INFILTRATION CONTRACT'), findsOneWidget);
+    await tester.tap(find.text('INDUSTRIAL DEPOT'));
+    await tester.pumpAndSettle();
+
+    // Verify Expedition screen is launched with prominent Backpack dock
     expect(find.byType(ExpeditionScreen), findsOneWidget);
     expect(find.textContaining('SCOUT: VANCE'), findsOneWidget);
+    expect(find.textContaining('BACKPACK (0)'), findsOneWidget);
     expect(find.textContaining('FLOOR 1'), findsOneWidget);
   });
 }

@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:material_ui/material_ui.dart';
-import '../../core/pixel_theme.dart';
+import '../../../core/pixel_theme.dart';
 
 class HitShake extends StatefulWidget {
   final Widget child;

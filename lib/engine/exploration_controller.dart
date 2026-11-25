@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../domain/models.dart';
+import 'banter_engine.dart';
 import 'building_generator.dart';
 import 'combat_engine.dart';
 
@@ -15,6 +16,7 @@ class ExplorationController extends ChangeNotifier {
   int currentRoomIndex;
 
   CombatEngine? activeCombat;
+  BanterExchange? activeBanter;
   String? lastEventLog;
 
   // Auto-Battler & Combat Animation State
@@ -36,6 +38,7 @@ class ExplorationController extends ChangeNotifier {
   bool isEnemyLyingOnGround = false;
   bool isHeroLyingOnGround = false;
   bool isDefeatScreenVisible = false;
+  bool isBossIntroActive = false;
 
   ExplorationController({
     required this.building,
@@ -49,6 +52,27 @@ class ExplorationController extends ChangeNotifier {
 
   Room get currentRoom =>
       building.floors[currentFloorIndex].rooms[currentRoomIndex];
+
+  bool get isBossDefeated {
+    for (final floor in building.floors) {
+      for (final room in floor.rooms) {
+        if (room.type == RoomType.bossChamber &&
+            room.enemy != null &&
+            room.enemy!.isDead) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool get canExtract {
+    if (player.isDead) return false;
+    if (activeCombat?.status == CombatStatus.inProgress) return false;
+    if (isBossDefeated) return true;
+    return currentRoom.type == RoomType.entrance &&
+        (player.gold > 0 || player.backpack.isNotEmpty);
+  }
 
   void _initStartingRoom() {
     currentRoom.state = RoomState.active;
@@ -111,17 +135,36 @@ class ExplorationController extends ChangeNotifier {
     if (currentRoom.hasUnresolvedEnemy) {
       activeCombat = CombatEngine(player: player, enemy: currentRoom.enemy!);
       final enemy = currentRoom.enemy!;
-      lastEventLog = pickCombatQuip(
-        1,
-        isBoss: enemy.isBoss,
+      activeBanter = BanterEngine.buildExchange(
+        enemy: enemy,
+        round: 1,
         isLowHp: player.currentHp <= (player.maxHp * 0.25).ceil(),
         seed: targetFloor * 7 + targetRoom,
       );
+      lastEventLog = activeBanter!.heroLine;
+      if (enemy.isBoss) {
+        isBossIntroActive = true;
+        Future.delayed(const Duration(milliseconds: 1200), () {
+          if (!_disposed) {
+            isBossIntroActive = false;
+            notifyListeners();
+          }
+        });
+      }
       startAutoCombat();
     } else {
       activeCombat = null;
+      activeBanter = null;
       isAutoCombatActive = false;
-      if (currentRoom.hasUnsearchedScrap) {
+      isBossIntroActive = false;
+      if (currentRoom.hasUnresolvedEvent &&
+          currentRoom.eventType == RoomEventType.tripwire) {
+        _triggerTripwire();
+      } else if (currentRoom.hasUnresolvedEvent) {
+        lastEventLog = currentRoom.eventType == RoomEventType.lockedSafe
+            ? '"Spot a sealed floor safe. Got a key or crowbar?"'
+            : '"An intact medical cabinet. Might still hold supplies."';
+      } else if (currentRoom.hasUnsearchedScrap) {
         lastEventLog = '"Someone left a pile of scrap here. Might be worth a look."';
       } else if (currentRoom.isElevator) {
         lastEventLog = '"Rusted cables, flickering bulb... hope this lift holds."';
@@ -203,12 +246,13 @@ class ExplorationController extends ChangeNotifier {
 
       final nextRound = activeCombat!.roundCount + 1;
       if (nextRound == 2 || nextRound == 3) {
-        lastEventLog = pickCombatQuip(
-          nextRound,
-          isBoss: activeCombat!.enemy.isBoss,
+        activeBanter = BanterEngine.buildExchange(
+          enemy: activeCombat!.enemy,
+          round: nextRound,
           isLowHp: player.currentHp <= (player.maxHp * 0.25).ceil(),
           seed: currentFloorIndex * 7 + currentRoomIndex,
         );
+        lastEventLog = activeBanter!.heroLine;
         notifyListeners();
       }
 
@@ -322,6 +366,7 @@ class ExplorationController extends ChangeNotifier {
     isAutoCombatActive = false;
     isEnemyAggroed = false;
     isShakingEnemy = false;
+    activeBanter = null;
     currentRoom.scrapPile = generator.generateScrapPile(currentFloorIndex);
     currentRoom.state = RoomState.cleared;
     _revealAdjacentRooms(currentFloorIndex, currentRoomIndex);
@@ -349,7 +394,7 @@ class ExplorationController extends ChangeNotifier {
       lastEventLog = '"Found ${item.name}! Stuffed it into my backpack."';
       _showTransientScrapBanner('+ ${item.name.toUpperCase()}');
     } else {
-      lastEventLog = _pickEmptyScrapQuip(currentFloorIndex, currentRoomIndex);
+      lastEventLog = BanterEngine.emptyScrapQuip(currentFloorIndex * 5 + currentRoomIndex);
       _showTransientScrapBanner('EMPTY JUNK');
     }
     notifyListeners();
@@ -365,53 +410,25 @@ class ExplorationController extends ChangeNotifier {
     });
   }
 
-  String _pickEmptyScrapQuip(int floorIdx, int roomIdx) {
-    const quips = [
-      '"Nothing but rusted tins and rat droppings."',
-      '"Picked clean already. Waste of time."',
-      '"Just bent metal and ash."',
-      '"Empty. Better luck in the next room."',
-    ];
-    return quips[(floorIdx * 5 + roomIdx) % quips.length];
-  }
+  bool get canUseStealthboy =>
+      player.stealthboys > 0 &&
+      activeCombat != null &&
+      activeCombat!.status == CombatStatus.inProgress &&
+      !activeCombat!.enemy.isBoss;
 
-  String pickCombatQuip(
-    int round, {
-    required bool isBoss,
-    required bool isLowHp,
-    int seed = 0,
-  }) {
-    if (round <= 1) {
-      if (isBoss) {
-        return '"Whoa... now that\'s a big problem. Steady, Vance."';
-      }
-      const round1Quips = [
-        '"Great. Something else trying to eat me."',
-        '"Easy now... just me, my gun, and bad lighting."',
-        '"Stay sharp, Vance. Nobody\'s coming to bail you out."',
-        '"Looks angry. Let\'s make this quick."',
-      ];
-      return round1Quips[seed % round1Quips.length];
-    }
-
-    if (round == 2) {
-      if (isLowHp) {
-        return '"Bleeding out... need to end this fast!"';
-      }
-      const round2Quips = [
-        '"Tough bastard... keep firing!"',
-        '"Armor\'s taking hits—stay sharp!"',
-        '"Not going down without a fight, huh?"',
-      ];
-      return round2Quips[seed % round2Quips.length];
-    }
-
-    const round3Quips = [
-      '"Still standing?! Drop already!"',
-      '"This is taking too long... finish it!"',
-      '"Make every shot count, Vance!"',
-    ];
-    return round3Quips[seed % round3Quips.length];
+  void useStealthboy() {
+    if (!canUseStealthboy) return;
+    final enemyName = activeCombat!.enemy.name;
+    player.stealthboys--;
+    isAutoCombatActive = false;
+    isEnemyAggroed = false;
+    isShakingEnemy = false;
+    activeCombat = null;
+    currentRoom.isBypassed = true;
+    currentRoom.state = RoomState.cleared;
+    _revealAdjacentRooms(currentFloorIndex, currentRoomIndex);
+    lastEventLog = '"Stealthboy engaged! Slipped right past the $enemyName."';
+    notifyListeners();
   }
 
   void useMedkit() {
@@ -427,6 +444,128 @@ class ExplorationController extends ChangeNotifier {
     if (player.psychoActive) return;
     player.psychoActive = true;
     lastEventLog = 'Injected Combat Psycho (+6 DMG).';
+    notifyListeners();
+  }
+
+  void _triggerTripwire() {
+    currentRoom.isEventResolved = true;
+    final raw = 4 + generator.rng.nextInt(4); // 4-7 dmg
+    final dr = player.rollArmorReduction(generator.rng);
+    final dmg = (raw - dr).clamp(1, 99);
+    player.currentHp = (player.currentHp - dmg).clamp(0, player.maxHp);
+    isShakingHero = true;
+    heroDamagePopup = '-$dmg';
+    lastEventLog = '"[TRAP] Tripped a rusted wire! Shrapnel hit for $dmg DMG."';
+
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (!_disposed) {
+        isShakingHero = false;
+        notifyListeners();
+      }
+    });
+
+    if (player.isDead) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (_disposed) return;
+        isHeroLyingOnGround = true;
+        notifyListeners();
+        Future.delayed(const Duration(milliseconds: 1000), () {
+          if (_disposed) return;
+          isDefeatScreenVisible = true;
+          notifyListeners();
+        });
+      });
+    }
+  }
+
+  void resolveRoomEvent({bool useKey = false}) {
+    if (!currentRoom.hasUnresolvedEvent) return;
+    final type = currentRoom.eventType;
+    currentRoom.isEventResolved = true;
+
+    if (type == RoomEventType.medCabinet) {
+      player.medkits++;
+      final mat = generator.rollCraftingMaterial();
+      player.backpack.add(mat);
+      lastEventLog =
+          '"Found a Medkit and ${mat.name} inside the cabinet!"';
+      _showTransientScrapBanner('+1 MED / ${mat.name.toUpperCase()}');
+      notifyListeners();
+      return;
+    }
+
+    if (type == RoomEventType.lockedSafe) {
+      if (useKey && player.keys > 0) {
+        player.keys--;
+        final item = generator.rollSafeLoot(currentFloorIndex);
+        player.backpack.add(item);
+        player.gold += 15;
+        lastEventLog =
+            '"Key worked! Packed ${item.name} and +15 Gold into my bag."';
+        _showTransientScrapBanner('+ ${item.name.toUpperCase()}');
+      } else {
+        final success = generator.rng.nextBool();
+        if (success) {
+          final item = generator.rollSafeLoot(currentFloorIndex);
+          player.backpack.add(item);
+          player.gold += 8;
+          lastEventLog =
+              '"Pried it open! Packed ${item.name} and +8 Gold."';
+          _showTransientScrapBanner('+ ${item.name.toUpperCase()}');
+        } else {
+          final dmg = 4 + generator.rng.nextInt(4);
+          player.currentHp = (player.currentHp - dmg).clamp(0, player.maxHp);
+          isShakingHero = true;
+          heroDamagePopup = '-$dmg';
+          lastEventLog = '"Safe latch snapped back! Sliced my hand for $dmg DMG."';
+          Future.delayed(const Duration(milliseconds: 400), () {
+            if (!_disposed) {
+              isShakingHero = false;
+              notifyListeners();
+            }
+          });
+        }
+      }
+      notifyListeners();
+    }
+  }
+
+  void equipFromBackpack(int index) {
+    if (index < 0 || index >= player.backpack.length) return;
+    final item = player.backpack.removeAt(index);
+
+    if (item.isWeapon) {
+      final old = player.equippedWeapon;
+      player.equippedWeapon = item;
+      player.backpack.add(old);
+      lastEventLog = '"Swapped to ${item.name}."';
+    } else if (item.isArmor) {
+      final old = player.equippedArmor;
+      player.equippedArmor = item;
+      player.backpack.add(old);
+      lastEventLog = '"Equipped ${item.name}."';
+    } else if (item.isConsumable) {
+      switch (item.consumableEffect) {
+        case ConsumableEffect.heal:
+          player.medkits++;
+          lastEventLog = '"Strapped Medkit to utility belt."';
+          break;
+        case ConsumableEffect.psycho:
+          player.psychoActive = true;
+          lastEventLog = '"Injected Combat Psycho (+6 DMG)!"';
+          break;
+        case ConsumableEffect.stealth:
+          player.stealthboys++;
+          lastEventLog = '"Pocketed Stealthboy Cloak."';
+          break;
+        case ConsumableEffect.key:
+          player.keys++;
+          lastEventLog = '"Pocketed Master Key."';
+          break;
+        default:
+          break;
+      }
+    }
     notifyListeners();
   }
 

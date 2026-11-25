@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
-import '../../core/pixel_theme.dart';
-import '../../domain/models.dart';
+import '../../../core/pixel_theme.dart';
+import '../../../domain/models.dart';
 
 class RoomBackgroundView extends StatelessWidget {
   final RoomType roomType;

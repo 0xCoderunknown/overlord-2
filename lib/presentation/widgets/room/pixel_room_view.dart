@@ -1,12 +1,13 @@
 import 'package:material_ui/material_ui.dart';
-import '../../core/pixel_theme.dart';
-import '../../domain/models.dart';
-import '../../engine/combat_engine.dart';
+import '../../../core/pixel_theme.dart';
+import '../../../domain/models.dart';
+import '../../../engine/banter_engine.dart';
+import '../../../engine/combat_engine.dart';
 import 'in_room_combat_bar.dart';
 import 'rickety_elevator_view.dart';
 import 'room_background_view.dart';
-import 'room_enemy_view.dart';
 import 'room_hero_view.dart';
+import 'room_interior_content.dart';
 
 class PixelRoomView extends StatelessWidget {
   final Room room;
@@ -25,9 +26,12 @@ class PixelRoomView extends StatelessWidget {
   final bool isHeroLyingOnGround;
   final String? scrapBannerText;
   final String? eventLog;
+  final BanterExchange? banter;
   final VoidCallback onTapRoom;
   final VoidCallback onHeal;
   final VoidCallback onSearchScrap;
+  final VoidCallback? onTriggerEvent;
+  final VoidCallback? onStealth;
 
   const PixelRoomView({
     super.key,
@@ -47,9 +51,12 @@ class PixelRoomView extends StatelessWidget {
     this.isHeroLyingOnGround = false,
     this.scrapBannerText,
     this.eventLog,
+    this.banter,
     required this.onTapRoom,
     required this.onHeal,
     required this.onSearchScrap,
+    this.onTriggerEvent,
+    this.onStealth,
   });
 
   double get roomWidth => room.isElevator ? 100 : 290;
@@ -268,7 +275,9 @@ class PixelRoomView extends StatelessWidget {
                   room: room,
                   player: player,
                   eventLog: eventLog,
+                  banter: banter,
                   onHeal: onHeal,
+                  onStealth: onStealth,
                 ),
               )
             else if (isActive && eventLog != null && eventLog!.isNotEmpty)
@@ -316,74 +325,17 @@ class PixelRoomView extends StatelessWidget {
   }
 
   Widget _buildRoomInteriorContent({bool enemyFacesLeft = true}) {
-    if (room.scrapPile != null) {
-      final scrap = room.scrapPile!;
-      return GestureDetector(
-        onTap: (isActive && !scrap.isSearched) ? onSearchScrap : null,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isActive && scrapBannerText != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                color: PixelTheme.roomVoid.withValues(alpha: 0.95),
-                child: Text(
-                  scrapBannerText!,
-                  style: PixelTheme.pixelStyle(
-                    fontSize: 7,
-                    fontWeight: FontWeight.bold,
-                    color: PixelTheme.textMuted,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 2),
-            ],
-            Icon(
-              Icons.hardware,
-              color: scrap.isSearched ? PixelTheme.borderPixel : PixelTheme.chestGold,
-              size: 32,
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              color: PixelTheme.roomVoid.withValues(alpha: 0.9),
-              child: Text(
-                scrap.isSearched ? 'CLEARED SCRAP' : 'TAP TO SEARCH',
-                style: PixelTheme.pixelStyle(
-                  fontSize: 7,
-                  fontWeight: FontWeight.bold,
-                  color: scrap.isSearched ? PixelTheme.borderPixel : PixelTheme.chestGold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (room.enemy != null) {
-      return RoomEnemyView(
-        enemy: room.enemy!,
-        isShaking: isShakingEnemy,
-        damagePopup: enemyDamagePopup,
-        facesLeft: enemyFacesLeft,
-        isAggroed: isEnemyAggroed,
-        isLyingOnGround: isEnemyLyingOnGround,
-      );
-    }
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(Icons.check_circle_outline, color: PixelTheme.borderPixel, size: 22),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-          color: PixelTheme.roomVoid.withValues(alpha: 0.9),
-          child: Text(
-            'CLEARED',
-            style: PixelTheme.pixelStyle(fontSize: 7, color: PixelTheme.borderPixel),
-          ),
-        ),
-      ],
+    return RoomInteriorContent(
+      room: room,
+      isActive: isActive,
+      enemyFacesLeft: enemyFacesLeft,
+      isShakingEnemy: isShakingEnemy,
+      enemyDamagePopup: enemyDamagePopup,
+      isEnemyAggroed: isEnemyAggroed,
+      isEnemyLyingOnGround: isEnemyLyingOnGround,
+      scrapBannerText: scrapBannerText,
+      onSearchScrap: onSearchScrap,
+      onTriggerEvent: onTriggerEvent,
     );
   }
 }
