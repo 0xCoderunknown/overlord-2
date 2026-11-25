@@ -349,4 +349,42 @@ class GameDatabase {
     'An empty soda bottle sits on the desk. The bottle cap is the only valuable part.',
     'Someone carved tally marks into the doorframe. They stop at forty-two.',
   ];
+
+  static const List<String> clinicLore = [
+    'Shattered med-vials crunch under my boots.',
+    'An old triage chart still hangs on the rusted clipboard.',
+    'Smells like stale antiseptic and copper.',
+  ];
+
+  static const List<String> generatorLore = [
+    'Dead coolant pipes drip rhythmically into the grate.',
+    'The radiation meter ticks faster near the blown fuses.',
+    'Ozone and scorched wiring hang heavy in the air.',
+  ];
+
+  static const List<String> officeLore = [
+    'A pre-war terminal blinks an amber cursor: NO SIGNAL.',
+    'Desk drawers pulled wide open. Nothing left but ash.',
+    'Found a dusty coffee mug beside a skeleton in a tie.',
+  ];
+
+  static const List<String> storageLore = [
+    'Toppled steel shelving blocks half the wall.',
+    'Empty crate stencils: VAULT-TEC RATION PACKS.',
+    'Rusted padlock snapped off a long time ago.',
+  ];
+
+  static List<String> getIndoorLorePool(RoomType type) {
+    return switch (type) {
+      RoomType.clinic => clinicLore,
+      RoomType.generator => generatorLore,
+      RoomType.office => officeLore,
+      RoomType.storage => storageLore,
+      _ => [
+          ...emptyRoomLore,
+          'Dust motes drift through a cracked ceiling vent.',
+          'Faint scratching behind the bulkhead... probably just pipes.',
+        ],
+    };
+  }
 }

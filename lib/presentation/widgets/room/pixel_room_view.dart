@@ -27,6 +27,7 @@ class PixelRoomView extends StatelessWidget {
   final String? scrapBannerText;
   final String? eventLog;
   final BanterExchange? banter;
+  final bool isHeroReplyingToBanter;
   final VoidCallback onTapRoom;
   final VoidCallback onHeal;
   final VoidCallback onSearchScrap;
@@ -52,6 +53,7 @@ class PixelRoomView extends StatelessWidget {
     this.scrapBannerText,
     this.eventLog,
     this.banter,
+    this.isHeroReplyingToBanter = false,
     required this.onTapRoom,
     required this.onHeal,
     required this.onSearchScrap,
@@ -276,6 +278,7 @@ class PixelRoomView extends StatelessWidget {
                   player: player,
                   eventLog: eventLog,
                   banter: banter,
+                  isHeroReplying: isHeroReplyingToBanter,
                   onHeal: onHeal,
                   onStealth: onStealth,
                 ),

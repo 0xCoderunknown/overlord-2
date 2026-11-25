@@ -8,6 +8,7 @@ import '../../engine/bunker_manager.dart';
 import '../../engine/exploration_controller.dart';
 import '../widgets/backpack_sheet.dart';
 import '../widgets/expedition_bottom_bar.dart';
+import '../widgets/expedition_defeat_view.dart';
 import '../widgets/pixel_hud.dart';
 import '../widgets/room/pixel_room_view.dart';
 import '../widgets/terminal/event_modal.dart';
@@ -301,6 +302,8 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
                     scrapBannerText: isActive ? _controller.scrapBannerText : null,
                     eventLog: isActive ? _controller.lastEventLog : null,
                     banter: isActive ? _controller.activeBanter : null,
+                    isHeroReplyingToBanter:
+                        isActive && _controller.isHeroReplyingToBanter,
                     onTapRoom: () =>
                         _controller.moveTo(room.floorIndex, room.roomIndex),
                     onHeal: () => _controller.useMedkit(),
@@ -318,80 +321,23 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
   }
 
   Widget _buildDefeatView() {
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.all(24),
-        padding: const EdgeInsets.all(24),
-        decoration: PixelTheme.pixelBox(
-          background: PixelTheme.roomVoid,
-          borderColor: PixelTheme.alertRed,
-          borderWidth: 2,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.warning_amber,
-              color: PixelTheme.alertRed,
-              size: 48,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'EXPEDITION TERMINATED',
-              style: PixelTheme.pixelStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: PixelTheme.alertRed,
-                letterSpacing: 2,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Scout flatlined in Sector F${_controller.currentFloorIndex + 1}:R${_controller.currentRoomIndex + 1}.',
-              style: PixelTheme.pixelStyle(
-                fontSize: 11,
-                color: PixelTheme.textLight,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: PixelTheme.alertRed,
-                shape: const RoundedRectangleBorder(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
-              onPressed: () {
-                if (widget.bunkerManager != null &&
-                    Navigator.of(context).canPop()) {
-                  widget.bunkerManager!.completeExpedition(
-                    goldEarned: 0,
-                    lootedItems: const [],
-                    unusedMedkits: 0,
-                    survived: false,
-                  );
-                  Navigator.of(context).pop();
-                } else {
-                  _restart();
-                }
-              },
-              child: Text(
-                widget.bunkerManager != null
-                    ? 'RETURN TO BUNKER'
-                    : 'DEPLOY NEW SQUAD',
-                style: PixelTheme.pixelStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: PixelTheme.roomVoid,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ExpeditionDefeatView(
+      floorIndex: _controller.currentFloorIndex,
+      roomIndex: _controller.currentRoomIndex,
+      hasBunker: widget.bunkerManager != null,
+      onConfirm: () {
+        if (widget.bunkerManager != null && Navigator.of(context).canPop()) {
+          widget.bunkerManager!.completeExpedition(
+            goldEarned: 0,
+            lootedItems: const [],
+            unusedMedkits: 0,
+            survived: false,
+          );
+          Navigator.of(context).pop();
+        } else {
+          _restart();
+        }
+      },
     );
   }
 }

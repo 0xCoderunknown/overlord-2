@@ -9,6 +9,8 @@ class BunkerManager extends ChangeNotifier {
   List<Item> globalStash = [];
   VaultFacility medbay = VaultFacility(id: 'fac_medbay');
   List<Scavenger> roster = [];
+  String? lastDebrief;
+  int expeditionCount = 0;
 
   BunkerManager() {
     _initStarterBunker();
@@ -224,6 +226,7 @@ class BunkerManager extends ChangeNotifier {
     required int unusedMedkits,
     required bool survived,
   }) {
+    expeditionCount++;
     if (survived) {
       caps += goldEarned;
       for (final eq in lootedItems) {
@@ -234,6 +237,10 @@ class BunkerManager extends ChangeNotifier {
             ItemDatabase.consumables.firstWhere((c) => c['id'] == 'c_medkit');
         addItemToStash(Item.fromDatabase(medkitData, quantity: unusedMedkits));
       }
+      lastDebrief =
+          'EXTRACTED +$goldEarned CAPS & ${lootedItems.length} SALVAGE.';
+    } else {
+      lastDebrief = 'VANCE FLATLINED IN THE RUINS. CLONE SPUN UP.';
     }
     notifyListeners();
   }

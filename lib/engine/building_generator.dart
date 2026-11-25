@@ -1,6 +1,5 @@
 import 'dart:math';
 import '../data/game_database.dart';
-import '../data/vault_archive/lore_database.dart';
 import '../domain/models.dart';
 
 class BuildingGenerator {
@@ -88,11 +87,7 @@ class BuildingGenerator {
           scrapPile = generateScrapPile(f);
         } else {
           contentType = ContentType.empty;
-          final allLore = [
-            ...GameDatabase.emptyRoomLore,
-            ...passiveLore.map((lines) => lines.join(' ')),
-          ];
-          ambient = '"${allLore[rng.nextInt(allLore.length)]}"';
+          ambient = _pickIndoorLore(type, rng);
           final evRoll = rng.nextInt(100);
           if (type == RoomType.clinic && evRoll < 40) {
             eventType = RoomEventType.medCabinet;
@@ -128,6 +123,11 @@ class BuildingGenerator {
       name: name,
       floors: floors,
     );
+  }
+
+  String _pickIndoorLore(RoomType type, Random rng) {
+    final pool = GameDatabase.getIndoorLorePool(type);
+    return '"${pool[rng.nextInt(pool.length)]}"';
   }
 
   Enemy _rollEnemyForFloor(int floorIndex, {int bountyMultiplier = 1}) {

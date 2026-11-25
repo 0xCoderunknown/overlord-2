@@ -6,6 +6,24 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
 
 ---
 
+## [Unreleased]
+
+### 🏛️ Vault Command Center & Ready Room Redesign
+- **Living Ready Bay (`BunkerReadyRoom`, `OverseerScreen`):**
+  - Replaced the static dossier card with a cutaway Vault 42 Ready Bay showing Scout Vance on the bunker floor slab alongside his equipped Weapon, Armor, and Medkits.
+  - Added live deck status badges (`BUY GEAR`, `X/50 SLOTS`, `LOCKED (10K)` / `ONLINE` / `BREWING` / `CLAIM READY`) and an Overseer PA / Last-Run Debrief ticker.
+
+### 💬 Call-and-Response Banter, Boss Taunts & Indoor Lore
+- **Sequential Combat Banter:**
+  - Updated combat banter to play sequentially (`2.0s` enemy taunt $\rightarrow$ `1.4s` Vance reply) without a 3-round cap, keeping banter visible even when Stealthboys or Emergency Heal are active.
+  - Added breathing space after room entry (`450ms`), during enemy knockdowns, and before Vance's post-fight scrap quip.
+- **Enemy-Matched & Boss Dialogue:**
+  - Added *Bad Boys II*-style absurd random-word confusion lines for mutated animals & Turkey, feral ghoul rasps, robotic `Pre-War Battlemech` lines, and *Borderlands 1* Sledge-inspired Apex Boss taunts (timed cleanly after the boss intro overlay).
+- **Indoor Room-Type Lore:**
+  - Matched empty-room observations to `clinic`, `generator`, `office`, `storage`, and `corridor` interiors.
+
+---
+
 ## [0.0.5] - 25-11-2026
 
 ### 🏛️ Complete Bunker ↔ Expedition Loop & Contracts

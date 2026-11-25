@@ -17,6 +17,7 @@ class ExplorationController extends ChangeNotifier {
 
   CombatEngine? activeCombat;
   BanterExchange? activeBanter;
+  bool isHeroReplyingToBanter = false;
   String? lastEventLog;
 
   // Auto-Battler & Combat Animation State
@@ -135,13 +136,9 @@ class ExplorationController extends ChangeNotifier {
     if (currentRoom.hasUnresolvedEnemy) {
       activeCombat = CombatEngine(player: player, enemy: currentRoom.enemy!);
       final enemy = currentRoom.enemy!;
-      activeBanter = BanterEngine.buildExchange(
-        enemy: enemy,
-        round: 1,
-        isLowHp: player.currentHp <= (player.maxHp * 0.25).ceil(),
-        seed: targetFloor * 7 + targetRoom,
-      );
-      lastEventLog = activeBanter!.heroLine;
+      activeBanter = null;
+      isHeroReplyingToBanter = false;
+      lastEventLog = null;
       if (enemy.isBoss) {
         isBossIntroActive = true;
         Future.delayed(const Duration(milliseconds: 1200), () {
@@ -155,6 +152,7 @@ class ExplorationController extends ChangeNotifier {
     } else {
       activeCombat = null;
       activeBanter = null;
+      isHeroReplyingToBanter = false;
       isAutoCombatActive = false;
       isBossIntroActive = false;
       if (currentRoom.hasUnresolvedEvent &&
@@ -162,7 +160,7 @@ class ExplorationController extends ChangeNotifier {
         _triggerTripwire();
       } else if (currentRoom.hasUnresolvedEvent) {
         lastEventLog = currentRoom.eventType == RoomEventType.lockedSafe
-            ? '"Spot a sealed floor safe. Got a key or crowbar?"'
+            ? '"Spotted a sealed floor safe. Got a key or a crowbar?"'
             : '"An intact medical cabinet. Might still hold supplies."';
       } else if (currentRoom.hasUnsearchedScrap) {
         lastEventLog = '"Someone left a pile of scrap here. Might be worth a look."';
@@ -177,6 +175,19 @@ class ExplorationController extends ChangeNotifier {
 
     notifyListeners();
     return true;
+  }
+
+  Future<void> _playBanterCallAndResponse(BanterExchange exchange) async {
+    activeBanter = exchange;
+    isHeroReplyingToBanter = false;
+    notifyListeners();
+
+    await Future.delayed(const Duration(milliseconds: 2000));
+    if (_disposed || activeBanter != exchange) return;
+    isHeroReplyingToBanter = true;
+    notifyListeners();
+
+    await Future.delayed(const Duration(milliseconds: 1400));
   }
 
   void _revealAdjacentRooms(int floorIdx, int roomIdx) {
@@ -230,7 +241,23 @@ class ExplorationController extends ChangeNotifier {
     isEnemyAggroed = true;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 1000));
+    // Wait for boss intro banner (1250ms) or brief room breathing space (450ms) before enemy speaks
+    final entryDelay = activeCombat!.enemy.isBoss ? 1250 : 450;
+    await Future.delayed(Duration(milliseconds: entryDelay));
+    if (_disposed ||
+        activeCombat == null ||
+        activeCombat!.status != CombatStatus.inProgress) {
+      return;
+    }
+
+    await _playBanterCallAndResponse(
+      BanterEngine.buildExchange(
+        enemy: activeCombat!.enemy,
+        round: 1,
+        isLowHp: player.currentHp <= (player.maxHp * 0.25).ceil(),
+        seed: currentFloorIndex * 7 + currentRoomIndex,
+      ),
+    );
     if (_disposed ||
         activeCombat == null ||
         activeCombat!.status != CombatStatus.inProgress) {
@@ -245,24 +272,30 @@ class ExplorationController extends ChangeNotifier {
       _isProcessingRound = true;
 
       final nextRound = activeCombat!.roundCount + 1;
-      if (nextRound == 2 || nextRound == 3) {
-        activeBanter = BanterEngine.buildExchange(
-          enemy: activeCombat!.enemy,
-          round: nextRound,
-          isLowHp: player.currentHp <= (player.maxHp * 0.25).ceil(),
-          seed: currentFloorIndex * 7 + currentRoomIndex,
+      if (nextRound >= 2) {
+        await _playBanterCallAndResponse(
+          BanterEngine.buildExchange(
+            enemy: activeCombat!.enemy,
+            round: nextRound,
+            isLowHp: player.currentHp <= (player.maxHp * 0.25).ceil(),
+            seed: currentFloorIndex * 7 + currentRoomIndex,
+          ),
         );
-        lastEventLog = activeBanter!.heroLine;
-        notifyListeners();
-      }
-
-      // Phase 1: Player's Turn anticipation
-      await Future.delayed(const Duration(milliseconds: 1000));
-      if (_disposed ||
-          activeCombat == null ||
-          activeCombat!.status != CombatStatus.inProgress) {
-        _isProcessingRound = false;
-        return;
+        if (_disposed ||
+            activeCombat == null ||
+            activeCombat!.status != CombatStatus.inProgress) {
+          _isProcessingRound = false;
+          return;
+        }
+      } else {
+        // Phase 1: Player's Turn anticipation
+        await Future.delayed(const Duration(milliseconds: 1000));
+        if (_disposed ||
+            activeCombat == null ||
+            activeCombat!.status != CombatStatus.inProgress) {
+          _isProcessingRound = false;
+          return;
+        }
       }
 
       final pDmg = activeCombat!.executePlayerStrike();
@@ -280,7 +313,10 @@ class ExplorationController extends ChangeNotifier {
         if (_disposed) return;
         isShakingEnemy = false;
 
-        // 2. Lie on ground for 1.0s (rotated 90 degrees)
+        // 2. Clear banter & let the room breathe during 1.0s 90-degree knockdown
+        activeBanter = null;
+        isHeroReplyingToBanter = false;
+        lastEventLog = null;
         isEnemyLyingOnGround = true;
         notifyListeners();
 
@@ -288,7 +324,7 @@ class ExplorationController extends ChangeNotifier {
         if (_disposed) return;
         isEnemyLyingOnGround = false;
 
-        // 3. Transform to scrap
+        // 3. Transform to scrap, then pause briefly before Vance speaks
         await _handleCombatVictory(pDmg);
         return;
       }
@@ -363,15 +399,24 @@ class ExplorationController extends ChangeNotifier {
   }
 
   Future<void> _handleCombatVictory(int pDmg) async {
+    final targetRoom = currentRoom;
     isAutoCombatActive = false;
     isEnemyAggroed = false;
     isShakingEnemy = false;
     activeBanter = null;
-    currentRoom.scrapPile = generator.generateScrapPile(currentFloorIndex);
-    currentRoom.state = RoomState.cleared;
+    isHeroReplyingToBanter = false;
+    targetRoom.scrapPile = generator.generateScrapPile(currentFloorIndex);
+    targetRoom.state = RoomState.cleared;
     _revealAdjacentRooms(currentFloorIndex, currentRoomIndex);
-    lastEventLog = '"One less thing between me and the exit. Let\'s check the scrap."';
     notifyListeners();
+
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (_disposed || currentRoom != targetRoom) return;
+    if (targetRoom.hasUnsearchedScrap) {
+      lastEventLog =
+          '"One less thing between me and the exit. Let\'s check the scrap."';
+      notifyListeners();
+    }
   }
 
   void executeCombatRound() {

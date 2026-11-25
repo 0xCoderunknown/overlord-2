@@ -5,7 +5,8 @@
 > This project is **100% AI-developed and AI-maintained**. Prioritize clean layer boundaries, deterministic tests, and maintainability over rushed shortcuts.  
 > **App:** Overlord 2 (2D Pixel-Art Building Expedition Crawler)  
 > **Tech Stack:** Flutter / Dart `^3.14.0` / `material_ui` / `ChangeNotifier` (100% Offline)  
-> **Docs:** `docs/DESIGN_DOCUMENT.md` | `docs/BESTIARY_AND_LOOT.md` | `docs/OVERLORD_IMPORT_MANIFEST.md`
+> **Docs:** `docs/DESIGN_DOCUMENT.md` | `docs/BESTIARY_AND_LOOT.md` | `docs/OVERLORD_IMPORT_MANIFEST.md`  
+> **Overlord 1 Reference:** Sibling repo at `../overlord-game` (relative path across PCs). Check it when building systems Overlord 1 already solved, and keep `docs/OVERLORD_IMPORT_MANIFEST.md` accurate (`Active` only when imported in `lib/`).
 
 ---
 

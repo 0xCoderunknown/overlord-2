@@ -176,22 +176,32 @@ void main() {
       expect(controller.scrapBannerText, 'EMPTY JUNK');
     });
 
-    test('BanterEngine produces two-way exchanges for animals, humans, bosses, and tracks roundCount', () {
+    test('BanterEngine produces two-way exchanges for animals, ghouls, humans, robots, bosses, and tracks roundCount', () {
       final rat = Enemy(name: 'Mutated Rat', maxHp: 16, minDamage: 2, maxDamage: 6);
+      final ghoul = Enemy(name: 'Feral Ghoul Pack', maxHp: 44, minDamage: 8, maxDamage: 16);
       final raider = Enemy(name: 'Raider Enforcer', maxHp: 38, minDamage: 8, maxDamage: 14);
-      final boss = Enemy(name: 'Pre-War Battlemech', maxHp: 90, minDamage: 18, maxDamage: 28, isBoss: true);
+      final mech = Enemy(name: 'Pre-War Battlemech', maxHp: 90, minDamage: 18, maxDamage: 28, isBoss: true);
+      final behemoth = Enemy(name: 'Irradiated Behemoth', maxHp: 85, minDamage: 20, maxDamage: 32, isBoss: true);
 
       final animalEx1 = BanterEngine.buildExchange(enemy: rat, round: 1, isLowHp: false, seed: 1);
       final animalEx2 = BanterEngine.buildExchange(enemy: rat, round: 2, isLowHp: false, seed: 1);
       final animalEx3 = BanterEngine.buildExchange(enemy: rat, round: 3, isLowHp: false, seed: 1);
-      expect(animalEx1.enemyLine, '.....');
+      expect(animalEx1.enemyLine, isNotEmpty);
       expect({animalEx1.heroLine, animalEx2.heroLine, animalEx3.heroLine}.length, 3);
+
+      expect(BanterEngine.classify(ghoul), EnemySpeakerKind.ghoul);
+      final ghoulEx = BanterEngine.buildExchange(enemy: ghoul, round: 1, isLowHp: false, seed: 0);
+      expect(ghoulEx.enemyLine, startsWith('*'));
 
       final humanEx = BanterEngine.buildExchange(enemy: raider, round: 1, isLowHp: false, seed: 0);
       expect(humanEx.enemyLine, isNot('.....'));
       expect(humanEx.heroLine, isNotEmpty);
 
-      final bossLowEx = BanterEngine.buildExchange(enemy: boss, round: 2, isLowHp: true, seed: 0);
+      expect(BanterEngine.classify(mech), EnemySpeakerKind.robot);
+      final mechEx = BanterEngine.buildExchange(enemy: mech, round: 1, isLowHp: false, seed: 0);
+      expect(mechEx.enemyLine, startsWith('['));
+
+      final bossLowEx = BanterEngine.buildExchange(enemy: behemoth, round: 2, isLowHp: true, seed: 0);
       expect(bossLowEx.heroLine, contains('Bleeding'));
 
       final player = ScoutCharacter(name: 'Vance');

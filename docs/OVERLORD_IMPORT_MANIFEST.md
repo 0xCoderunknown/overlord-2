@@ -2,9 +2,9 @@
 
 > **DOCUMENT ID:** `OV2-MANIFEST-001`  
 > **DATE:** 24-11-2026  
-> **SOURCE REPOSITORY:** [`K:/Android/overlord-game`](file:///K:/Android/overlord-game) (Overlord 1)  
-> **TARGET REPOSITORY:** [`K:/Android/overlord-2`](file:///K:/Android/overlord-2) (Overlord 2)  
-> **STATUS:** 100% COMPLETE IMPORT & VERIFIED ACTIVE ARCHITECTURE  
+> **SOURCE REPOSITORY:** `../overlord-game` (Overlord 1 — relative sibling folder across PCs)  
+> **TARGET REPOSITORY:** `.` (`overlord-2`)  
+> **STATUS:** TRACKING ACTIVE VS UNUSED IMPORTS (Mark `Active` only when imported in `lib/`)  
 
 ---
 
@@ -52,11 +52,11 @@ This manifest documents **every imported asset, file, database, model, and scree
 | **Bunker State** | [`lib/engine/bunker_manager.dart`](file:///k:/Android/overlord-2/lib/engine/bunker_manager.dart) | `lib/engine/game_manager.dart` | ChangeNotifier | **Active** | Manages Caps treasury, global stash, scout roster, and Medbay synthesis. |
 | **Domain Models** | [`lib/domain/vault_models.dart`](file:///k:/Android/overlord-2/lib/domain/vault_models.dart) | `lib/models/game_models.dart` | Domain Models | **Active** | `Item`, `Scavenger`, `VaultFacility`, `GameConfig`, and `toEquipmentItem()` bridge. |
 | **Item Database** | [`lib/data/vault_archive/item_database.dart`](file:///k:/Android/overlord-2/lib/data/vault_archive/item_database.dart) | `lib/content/item_database.dart` | Static Archive | **Active** | Weapons (Tier 1-3), Armor (Tier 1-3), Consumables, Materials, Scrap. |
-| **Enemy Database** | [`lib/data/vault_archive/enemy_database.dart`](file:///k:/Android/overlord-2/lib/data/vault_archive/enemy_database.dart) | `lib/content/enemy_database.dart` | Static Archive | **Active** | 9 tiered enemy profiles (grunts, speed, heavy, apex bosses) with HP & DMG stats. |
-| **Lore Database** | [`lib/data/vault_archive/lore_database.dart`](file:///k:/Android/overlord-2/lib/data/vault_archive/lore_database.dart) | `lib/content/lore_database.dart` | Static Archive | **Active** | 80+ atmospheric environmental snippets and pop-culture easter eggs. |
-| **Incident Database** | [`lib/data/vault_archive/incident_database.dart`](file:///k:/Android/overlord-2/lib/data/vault_archive/incident_database.dart) | `lib/content/incident_database.dart` | Static Archive | **Standby** | Combat setups, damage outcomes, and POI hazard/trap triggers for dialogs. |
-| **Character Database** | [`lib/data/vault_archive/character_database.dart`](file:///k:/Android/overlord-2/lib/data/vault_archive/character_database.dart) | `lib/content/character_database.dart` | Static Archive | **Standby** | Scavenger pool, recruitment profiles, hidden traits, and flavor dialogue. |
-| **POI Database** | [`lib/data/vault_archive/poi_database.dart`](file:///k:/Android/overlord-2/lib/data/vault_archive/poi_database.dart) | `lib/content/poi_database.dart` | Static Archive | **Standby** | In-room points of interest (safes, weapon lockers, terminals, chemical vats). |
+| **Enemy Database** | [`lib/data/vault_archive/enemy_database.dart`](file:///d:/Android/overlord-2/lib/data/vault_archive/enemy_database.dart) | `lib/content/enemy_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; crawler uses `game_database.dart` & `enemy.png` (`enemies/*.png` not bundled). |
+| **Lore Database** | [`lib/data/vault_archive/lore_database.dart`](file:///d:/Android/overlord-2/lib/data/vault_archive/lore_database.dart) | `lib/content/lore_database.dart` | Static Archive | **Active** | 80+ atmospheric environmental snippets imported by `building_generator.dart`. |
+| **Incident Database** | [`lib/data/vault_archive/incident_database.dart`](file:///d:/Android/overlord-2/lib/data/vault_archive/incident_database.dart) | `lib/content/incident_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; combat outcomes & POI hazard/trap triggers ready for wiring. |
+| **Character Database** | [`lib/data/vault_archive/character_database.dart`](file:///d:/Android/overlord-2/lib/data/vault_archive/character_database.dart) | `lib/content/character_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; scavenger recruitment pool, traits, and flavor dialogue. |
+| **POI Database** | [`lib/data/vault_archive/poi_database.dart`](file:///d:/Android/overlord-2/lib/data/vault_archive/poi_database.dart) | `lib/content/poi_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; in-room safes/lockers/terminals (`poi/*.png` not bundled). |
 | **Terminal Container** | [`lib/presentation/widgets/terminal/terminal_container.dart`](file:///k:/Android/overlord-2/lib/presentation/widgets/terminal/terminal_container.dart) | `lib/widgets/terminal_container.dart` | UI Widget | **Active** | High-contrast retro CRT bounding boxes for panels, banners, and modals. |
 | **Terminal Button** | [`lib/presentation/widgets/terminal/terminal_button.dart`](file:///k:/Android/overlord-2/lib/presentation/widgets/terminal/terminal_button.dart) | `lib/widgets/terminal_button.dart` | UI Widget | **Active** | Monospace terminal buttons with border glows and disabled null handling. |
 | **Item Grid Card** | [`lib/presentation/widgets/terminal/item_grid_card.dart`](file:///k:/Android/overlord-2/lib/presentation/widgets/terminal/item_grid_card.dart) | `lib/widgets/item_grid_card.dart` | UI Widget | **Active** | Tier-colored inventory and shop cards displaying sprite, stats, and badges. |
