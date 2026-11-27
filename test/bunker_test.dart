@@ -32,51 +32,6 @@ void main() {
       expect(bunker.getStashItemCount('c_medkit'), equals(initialCount + 3));
     });
 
-    test('buyItem deducts caps and adds new equipment to stash', () {
-      final testWeapon = Item(
-        id: 'w_test_pipe',
-        name: 'Test Pipe Rifle',
-        value: 120,
-        isStackable: false,
-        type: 'weapon',
-        tier: 1,
-      );
-
-      final initialCaps = bunker.caps;
-      final success = bunker.buyItem(testWeapon);
-
-      expect(success, isTrue);
-      expect(bunker.caps, equals(initialCaps - 120));
-      expect(bunker.globalStash.any((i) => i.name == 'Test Pipe Rifle'), isTrue);
-    });
-
-    test('buyItem fails if player has insufficient caps', () {
-      final expensiveItem = Item(
-        id: 'w_laser_gatling',
-        name: 'Gatling Laser',
-        value: 99999,
-        isStackable: false,
-        type: 'weapon',
-        tier: 3,
-      );
-
-      final success = bunker.buyItem(expensiveItem);
-      expect(success, isFalse);
-    });
-
-    test('sellItem sells partial stack and credits half item value', () {
-      final medkit = bunker.globalStash.firstWhere((i) => i.id == 'c_medkit');
-      final unitSalePrice = bunker.getSellValue(medkit, 1);
-      final initialCaps = bunker.caps;
-      final initialQty = medkit.quantity;
-
-      expect(unitSalePrice, equals((medkit.value ~/ 2).clamp(1, 99999)));
-      bunker.sellItem(medkit, 1);
-
-      expect(bunker.caps, equals(initialCaps + unitSalePrice));
-      expect(bunker.getStashItemCount('c_medkit'), equals(initialQty - 1));
-    });
-
     test('unlockMedbay fails without sufficient caps and succeeds with 10000 caps', () {
       bunker.caps = 5000;
       expect(bunker.unlockMedbay(), isFalse);

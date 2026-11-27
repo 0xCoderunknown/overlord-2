@@ -21,15 +21,7 @@ class WeaponsScreen extends StatelessWidget {
         (w) => (item: w, tier: 2, challengeId: null),
       ),
       (
-        item: const EquipmentItem(
-          id: 'w_nail_bat',
-          name: 'Nail-Studded Bat',
-          type: ItemType.weapon,
-          minStat: 13,
-          maxStat: 20,
-          scrapValue: 6,
-          description: 'Unlocked slugger special. Tears through rodents.',
-        ),
+        item: GameDatabase.nailStuddedBat,
         tier: 2,
         challengeId: 'unlock_bat',
       ),

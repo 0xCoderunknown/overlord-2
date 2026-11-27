@@ -45,6 +45,7 @@ Enemies spawn dynamically based on the facility floor level, escalating towards 
 | **Tier 1** | Rusted Rebar Club | 7 – 12 | 3 Gold | Heavy blunt club with dried blood on the weighted end. |
 | **Tier 2** | 9mm Pipe Pistol | 9 – 15 | 4 Gold | Assembled from plumbing pipes and springs. Reliable kinetic punch. |
 | **Tier 2** | Modified Nailgun | 11 – 17 | 5 Gold | Battery-powered pneumatic piston firing sharpened iron spikes. |
+| **Tier 2 (Unlock)** | Nail-Studded Bat | 13 – 20 | 6 Gold | Unlocked via **Slugger Initiate** (5 kills). Tears through rodents. |
 | **Tier 3** | Pre-War Service Rifle | 16 – 26 | 10 Gold | Pristine military weapon. Lethal accuracy and armor penetration. |
 | **Tier 3** | Industrial Plasma Torch | 22 – 34 | 15 Gold | Bulk cutter that disintegrates organic targets in seconds. |
 

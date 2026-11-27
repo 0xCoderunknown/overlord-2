@@ -209,20 +209,10 @@ class BuildingGenerator {
 
     // 30% Weapon, 20% Armor, 20% Fallout Food, 15% Utility Consumable, 15% Medbay Material
     if (roll < 30) {
-      final weapons = List<EquipmentItem>.from(GameDatabase.getWeaponsByTier(tier));
-      if (tier >= 2 && unlockedIds.contains('unlock_bat')) {
-        weapons.add(
-          const EquipmentItem(
-            id: 'w_nail_bat',
-            name: 'Nail-Studded Bat',
-            type: ItemType.weapon,
-            minStat: 13,
-            maxStat: 20,
-            scrapValue: 6,
-            description: 'Unlocked slugger special. Tears through rodents.',
-          ),
-        );
-      }
+      final weapons = GameDatabase.getWeaponsByTier(
+        tier,
+        unlockedIds: unlockedIds,
+      );
       return weapons[rng.nextInt(weapons.length)];
     } else if (roll < 50) {
       final armors = GameDatabase.getArmorsByTier(tier);

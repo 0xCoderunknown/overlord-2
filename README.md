@@ -22,11 +22,11 @@ You're the Overseer of Vault Bunker 42. Pick a mission contract, choose your sco
 
 ```
                   ┌──────────────┬──────────────┬──────────────┬────────┐
-  FLOOR 3 (ROOF)  │  Corridor    │  Generator   │ [★ BOSS ★]   │ [ELEV] │
+  FLOOR 3 (ROOF)  │ [★ BOSS ★]   │  Corridor    │  Generator   │ [ELEV] │
                   ├──────────────┼──────────────┼──────────────┼────────┤
   FLOOR 2 (MID)   │  Clinic      │  Office      │  Storage     │ [ELEV] │
                   ├──────────────┼──────────────┼──────────────┼────────┤
-  FLOOR 1 (GROUND)│ [AIRLOCK]    │ [▶ VANCE]    │ [UNEXPLORED] │ [ELEV] │
+  FLOOR 1 (GROUND)│ [▶ AIRLOCK]  │ [OUTLINE]    │ [UNEXPLORED] │ [ELEV] │
                   └──────────────┴──────────────┴──────────────┴────────┘
 ```
 
@@ -46,7 +46,7 @@ No split minimaps or detached battle arenas. Everything happens right inside the
 * **Dramatic Knockdowns:** Defeated fighters freeze at `0 HP`, tip `90°` flat onto the steel floor, and dissolve into a searchable scrap pile.
 
 ### 🧰 Direct Scavenging, Rations & 25% Critical Triage
-* **Direct-to-Backpack Loot:** Tap `[SCRAP PILE]` drops to scavenge. Empty piles flash `EMPTY JUNK` and fade away; lucky finds go straight into your **Backpack** (`ExpeditionBottomBar`), where you can inspect items, eat wasteland rations out of combat, or tap to auto-equip best gear.
+* **Direct-to-Backpack Loot:** Tap `[SCRAP PILE]` drops to scavenge. Empty piles flash `EMPTY JUNK` and fade away; lucky finds (`30%` chance) go straight into your **Backpack** (`ExpeditionBottomBar`), where you can inspect items, eat wasteland rations out of combat, or tap to auto-equip best gear.
 * **Stealthboy Bypass & Events:** Use Stealthboys to slip past non-boss hostile rooms, and breach sealed Floor Safes, Med Cabinets, and Tripwire Traps.
 * **Emergency Medkits:** Trauma Medkits stay locked until your scout drops to **25% HP or lower**—pop one at the brink of death to swing a losing duel.
 
@@ -63,7 +63,7 @@ No split minimaps or detached battle arenas. Everything happens right inside the
 | **Tier 1 (Ground)** | Mutated Rat (`16 HP`), Feral Hound (`22 HP`) | Staple Gun (`5-9 DMG`), Rebar Club, Phonebook Vest (`2-4 DR`) |
 | **Tier 2 (Mid)** | Desperate Scrapper (`30 HP`), Raider Enforcer (`38 HP`) | Pipe Pistol (`9-15 DMG`), Modified Nailgun, Motorcycle Leathers |
 | **Tier 3 (Upper)** | Security Drone (`48 HP`), Feral Ghoul Pack (`44 HP`) | Service Rifle (`16-26 DMG`), Plasma Torch, Riot Suit, Power Frame |
-| **Tier 4 (Roof Boss)** | **Featherless Turkey** (`75 HP`, martial artist bird), Battlemech, Behemoth | High-tier gear + big Gold bounties |
+| **Tier 4 (Roof Boss)** | **Featherless Turkey** (`75 HP`, martial artist bird), Battlemech, Behemoth | Tier 3 scrap-pile gear + big Gold bounties |
 
 > Full stat tables and formulas: [Bestiary & Loot Compendium](docs/BESTIARY_AND_LOOT.md) · Design notes: [Design Document](docs/DESIGN_DOCUMENT.md)
 

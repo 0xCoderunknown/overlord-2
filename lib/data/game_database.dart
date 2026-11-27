@@ -96,7 +96,20 @@ class GameDatabase {
   // -------------------------------------------------------------
   // WEAPONS (TIER 1 TO TIER 3)
   // -------------------------------------------------------------
-  static List<EquipmentItem> getWeaponsByTier(int tier) {
+  static const EquipmentItem nailStuddedBat = EquipmentItem(
+    id: 'w_nail_bat',
+    name: 'Nail-Studded Bat',
+    type: ItemType.weapon,
+    minStat: 13,
+    maxStat: 20,
+    scrapValue: 6,
+    description: 'Unlocked slugger special. Tears through rodents.',
+  );
+
+  static List<EquipmentItem> getWeaponsByTier(
+    int tier, {
+    Set<String> unlockedIds = const {},
+  }) {
     switch (tier) {
       case 1:
         return const [
@@ -120,8 +133,8 @@ class GameDatabase {
           ),
         ];
       case 2:
-        return const [
-          EquipmentItem(
+        return [
+          const EquipmentItem(
             id: 'w_pipe_pistol',
             name: '9mm Pipe Pistol',
             type: ItemType.weapon,
@@ -130,7 +143,7 @@ class GameDatabase {
             scrapValue: 4,
             description: 'Crude firearm assembled from plumbing parts. Jams occasionally.',
           ),
-          EquipmentItem(
+          const EquipmentItem(
             id: 'w_nailgun',
             name: 'Modified Nailgun',
             type: ItemType.weapon,
@@ -139,6 +152,7 @@ class GameDatabase {
             scrapValue: 5,
             description: 'Battery-powered pneumatic rammer firing hardened spikes.',
           ),
+          if (unlockedIds.contains('unlock_bat')) nailStuddedBat,
         ];
       case 3:
       default:

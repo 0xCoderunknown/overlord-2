@@ -61,47 +61,6 @@ class BunkerManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool buyItem(Item item) {
-    if (caps < item.value) return false;
-    caps -= item.value;
-    addItemToStash(Item(
-      id: "${item.id}_${DateTime.now().millisecondsSinceEpoch}",
-      name: item.name,
-      type: item.type,
-      value: item.value,
-      isStackable: item.isStackable,
-      tier: item.tier,
-      minStat: item.minStat,
-      maxStat: item.maxStat,
-      description: item.description,
-      imagePath: item.imagePath,
-      quantity: 1,
-    ));
-    notifyListeners();
-    return true;
-  }
-
-  int getSellValue(Item item, [int quantity = 1]) {
-    final unitValue = (item.value ~/ 2).clamp(1, 99999);
-    return unitValue * quantity;
-  }
-
-  void sellItem(Item item, int quantity) {
-    final idx = globalStash.indexWhere((i) => i.id == item.id);
-    if (idx == -1) return;
-
-    final actualQty = quantity.clamp(1, globalStash[idx].quantity);
-    final saleValue = getSellValue(globalStash[idx], actualQty);
-
-    caps += saleValue;
-    globalStash[idx].quantity -= actualQty;
-
-    if (globalStash[idx].quantity <= 0) {
-      globalStash.removeAt(idx);
-    }
-    notifyListeners();
-  }
-
   bool unlockMedbay() {
     if (caps < GameConfig.medbayUnlockCost) return false;
     caps -= GameConfig.medbayUnlockCost;
@@ -191,20 +150,6 @@ class BunkerManager extends ChangeNotifier {
     medbay.isCrafting = false;
     medbay.outputReady = false;
     notifyListeners();
-  }
-
-  Item? getBestStashWeapon() {
-    final weapons = globalStash.where((i) => i.type == 'weapon').toList();
-    if (weapons.isEmpty) return null;
-    weapons.sort((a, b) => (b.maxStat ?? 0).compareTo(a.maxStat ?? 0));
-    return weapons.first;
-  }
-
-  Item? getBestStashArmor() {
-    final armors = globalStash.where((i) => i.type == 'armor').toList();
-    if (armors.isEmpty) return null;
-    armors.sort((a, b) => (b.maxStat ?? 0).compareTo(a.maxStat ?? 0));
-    return armors.first;
   }
 
   ScoutStarter get selectedStarter {
