@@ -22,6 +22,35 @@ class Overlord2App extends StatelessWidget {
           surface: PixelTheme.roomVoid,
         ),
       ),
+      builder: (context, child) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth <= 460) {
+              return child ?? const SizedBox.shrink();
+            }
+            const phoneWidth = 420.0;
+            final phoneHeight = constraints.maxHeight.clamp(0.0, 860.0);
+            return Container(
+              color: const Color(0xFF05060A),
+              alignment: Alignment.center,
+              child: Container(
+                width: phoneWidth,
+                height: phoneHeight,
+                decoration: BoxDecoration(
+                  border: Border.all(color: PixelTheme.borderPixel, width: 2),
+                ),
+                clipBehavior: Clip.hardEdge,
+                child: MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    size: Size(phoneWidth, phoneHeight),
+                  ),
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              ),
+            );
+          },
+        );
+      },
       home: const OverseerScreen(),
     );
   }

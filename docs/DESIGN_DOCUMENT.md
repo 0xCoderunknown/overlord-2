@@ -1,8 +1,8 @@
 # OVERLORD 2 // Game Design & Technical Blueprint
 
 > **DOCUMENT ID:** `OV2-GDD-001`  
-> **DATE:** 22-11-2026  
-> **STATUS:** CONCEPT & ARCHITECTURAL FOUNDATION  
+> **DATE:** 27-11-2026  
+> **STATUS:** ACTIVE DEVELOPMENT (MOBILE & CHROME WEB)  
 
 ---
 
@@ -56,32 +56,29 @@
 
 ---
 
-## 💰 4. The Paid Requisition & Risk/Reward Economy
+## 💰 4. Progression, Starters & Contract Economy
 
-- **Permanent Unlocks $\neq$ Free Gear**:
-  - Unlocking a weapon (via kill mastery, milestones, or blueprints) registers it in the Vault Armory.
-  - Bringing an unlocked weapon as your starting loadout costs an upfront **Deployment Fee (Requisition Cost)** in Vault Gold.
-- **Economic Tension & Profit Margins**:
-  - **Starter Gear (Pipe Pistol):** Cost 0 Gold. High risk, 100% profit margin.
-  - **Mid-Tier (Combat Shotgun):** Cost ~300 Gold. Balances risk on Medium contracts.
-  - **Heavy / Legendary (RPG / Plasma Cannon):** Cost 2,000 Gold. Overkill on Easy/Medium missions causes a net financial loss even with a victory. On Hard/Nightmare missions (3,000+ Gold payout), it ensures survival but risks a devastating financial crash if you wipe!
-- **Mission Contracts (Choose 1 of 3)**:
-  - Each contract displays: Target Objective, Difficulty Tier, Base Gold Payout, and Enemy Threat Rating.
+- **Playable Scouts & Milestone Unlocks:**
+  - Players choose from 5 starter scouts (`Vance`, `Shina`, `Drifter`, `Sentry Bot`, and unlockable `Alley Cat`), each with distinct max HP and signature starter weapon/armor.
+  - Permanent milestones (`ChallengesScreen`) unlock new loot-pool weapons (`Nail-Studded Bat`) and starters (`Alley Cat`) across runs.
+  - Note: Paid Requisition (`MarketScreen`) and `StashScreen` are currently hidden/standby while the direct starter-deployment and Medbay synthesis loop is active.
+- **3-Tier Mission Contracts:**
+  - `Abandoned Clinic` (Tier 1, 2 Floors, Low Hazard), `Industrial Depot` (Tier 2, 3 Floors, Moderate Hazard), and `Black-Site Bunker` (Tier 3, 4 Floors, Lethal Threats, 2x Bounty Payout).
 
 ---
 
 ## 🗺️ 5. Roadmap & Milestone Horizons
 
-- [x] Flutter project initialization (Android + Web)
+- [x] Flutter project initialization (Android + mobile-framed Chrome Web `420×860`)
 - [x] Core Room & Building Data Structures (Grid, Room Types, Traversal Graph)
-- [x] 2D Cross-Section Building Renderer (Fog of war, room outlines, team marker)
-- [x] Tap-to-Move squad navigation engine
-- [x] Modular 1v1 combat foundation
-- [x] Scrap Piles upon enemy defeat (25% rare salvage & equip/scrap modal)
+- [x] 2D Cross-Section Building Renderer (Fog of war, room outlines, auto-follow camera)
+- [x] Tap-to-Move squad navigation engine & cleared-room backtracking
+- [x] Modular 1v1 auto-battler with turn cadence, hit recoil, floating damage numbers, and 3-stage knockdown
+- [x] Direct-to-backpack Scrap Piles, Fallout-style rations, Stealthboy bypass, and `BackpackSheet`
 - [x] 2D pixel-art cutaway rooms & narrow rickety elevator shaft
-- [x] Auto-battler loop with turn cadence, hit recoil, and floating damage numbers
-- [x] Dynamic combatant orientation (Scout & Enemy always face each other)
+- [x] Dynamic combatant orientation & sequential two-way combat banter (`BanterEngine`)
 - [x] Tactical survival emergency heal gating (<=25% HP only)
-- [ ] Tiered Key Safes (T1-T3) & In-run Weapon Upgrade Kits
-- [ ] Contract Selection Board (Choose 1 of 3 missions) & Paid Loadout Requisition
+- [x] In-room Safes, Medical Cabinets & Tripwire Traps (`EventModal`)
+- [x] 3-Tier Mission Contracts, 5 Playable Starters, Weapons Codex, Challenges & Medbay Synthesis
+- [ ] Re-enable Paid Requisition & Pre-Run Loadout Selection (when store economy is finalized)
 

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:overlord_2/data/game_database.dart';
 import 'package:overlord_2/data/vault_archive/item_database.dart';
 import 'package:overlord_2/domain/models.dart';
 import 'package:overlord_2/domain/vault_models.dart';
@@ -107,15 +108,15 @@ void main() {
       expect(bunker.getStashItemCount('c_medkit'), equals(medkitBefore + 2));
     });
 
-    test('deployExpeditionScout equips best gear and completeExpedition banks loot and gold', () {
+    test('deployExpeditionScout uses selected starter gear and completeExpedition unlocks challenges & banks consumables', () {
       final initialCaps = bunker.caps;
       final initialMeds = bunker.getStashItemCount('c_medkit');
       final scout = bunker.deployExpeditionScout();
 
       expect(scout.name, equals('Vance'));
+      expect(scout.equippedWeapon.name, equals('Crude Pipe Pistol'));
       expect(scout.medkits, equals(initialMeds));
       expect(bunker.getStashItemCount('c_medkit'), equals(0));
-      expect(scout.equippedWeapon.name, isNotEmpty);
 
       final loot = [
         const EquipmentItem(
@@ -126,18 +127,42 @@ void main() {
           maxStat: 30,
           scrapValue: 15,
         ),
+        const EquipmentItem(
+          id: 'med_syringe',
+          name: 'Used Syringe',
+          type: ItemType.consumable,
+          consumableEffect: ConsumableEffect.material,
+          scrapValue: 1,
+        ),
       ];
 
-      bunker.completeExpedition(
+      final unlocked = bunker.completeExpedition(
         goldEarned: 125,
         lootedItems: loot,
         unusedMedkits: 1,
         survived: true,
+        kills: 15,
+        ratKills: 15,
+        bossKills: 1,
       );
 
       expect(bunker.caps, equals(initialCaps + 125));
       expect(bunker.getStashItemCount('c_medkit'), equals(1));
-      expect(bunker.globalStash.any((i) => i.name == 'Plasma Cutter'), isTrue);
+      // Consumables/materials bank; OP run weapons do not carry over
+      expect(bunker.globalStash.any((i) => i.id == 'med_syringe'), isTrue);
+      expect(bunker.globalStash.any((i) => i.name == 'Plasma Cutter'), isFalse);
+      // Overlord 1 characters are selectable immediately
+      bunker.selectStarter('char_shina');
+      expect(bunker.deployExpeditionScout().maxHp, equals(80));
+      bunker.selectStarter('char_robot');
+      expect(bunker.deployExpeditionScout().maxHp, equals(150));
+
+      // Challenges unlocked
+      expect(unlocked.length, equals(3));
+      final cat = GameDatabase.starters.firstWhere((s) => s.id == 'starter_cat');
+      expect(bunker.isStarterUnlocked(cat), isTrue); // Alley Cat
+      bunker.selectStarter('starter_cat');
+      expect(bunker.selectedStarter.name, equals('Alley Cat'));
     });
   });
 }

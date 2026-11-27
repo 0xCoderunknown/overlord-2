@@ -142,7 +142,7 @@ class _ActionButton extends StatelessWidget {
                   Text(
                     label,
                     style: PixelTheme.pixelStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: color,
                     ),
@@ -151,7 +151,7 @@ class _ActionButton extends StatelessWidget {
                   Text(
                     subLabel,
                     style: PixelTheme.pixelStyle(
-                      fontSize: 8,
+                      fontSize: 9.5,
                       color: color.withValues(alpha: 0.75),
                     ),
                     overflow: TextOverflow.ellipsis,

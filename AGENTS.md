@@ -43,7 +43,8 @@
 | **Two-Way Combat Banter** | `BanterEngine` + `BanterDatabase` drive 1–3 round-scaled exchanges. Animals (including Featherless Turkey) speak `"....."` with confused/joking scout replies; humans, robots, and bosses trade back-and-forth lines. |
 | **Emergency Heal & Stealthboy** | Medkit healing is strictly locked until Scout HP drops to $\le 25\%$ max vitality. Stealthboys allow bypassing non-boss hostile rooms without combat. |
 | **Direct-to-Backpack Scavenging** | Searching scrap piles adds found gear/materials **straight into `ScoutCharacter.backpack`** (no keep/scrap prompt); empty junk triggers a scavenger quip + transient `EMPTY JUNK` tag. |
-| **Tactical Dock & Bunker Loop** | `ExpeditionBottomBar` provides `BACKPACK`, `MED`, and `EXTRACT`. `OverseerScreen` launches 3-tier contracts (`ContractPickerDialog`) and banks extracted Caps/loot into `BunkerManager` (`MarketScreen`, `StashScreen`, `FacilityScreen`). |
+| **Tactical Dock & Bunker Loop** | `ExpeditionBottomBar` provides `BACKPACK`, `MED`, and `EXTRACT`. `OverseerScreen` displays the 3-tier mission contracts directly (launching `MissionScreen` for scout selection) and a 2×2 hub deck (`CharactersScreen`, `WeaponsScreen`, `ChallengesScreen`, `FacilityScreen`); `MarketScreen` and `StashScreen` remain hidden/standby. |
+| **Mobile Frame & Auto-Follow Camera** | Web runs on Chrome wrap the app in a `420×860` mobile-proportioned frame; `ExpeditionScreen` smoothly auto-pans the camera to follow the scout as they move between rooms and floors. |
 
 ---
 
@@ -56,7 +57,7 @@ lib/
 ├── domain/                      # Pure Dart models (models.dart, vault_models.dart)
 ├── engine/                      # Core logic & controllers (banter_engine.dart, building_generator.dart, bunker_manager.dart, combat_engine.dart, exploration_controller.dart, engine.dart)
 └── presentation/
-    ├── bunker/                  # OverseerScreen, ContractPickerDialog, MarketScreen, StashScreen, FacilityScreen
+    ├── bunker/                  # OverseerScreen, MissionScreen, CharactersScreen, WeaponsScreen, ChallengesScreen, FacilityScreen (MarketScreen, StashScreen hidden/standby)
     ├── screens/                 # ExpeditionScreen
     └── widgets/                 # HUD/sheets (pixel_hud.dart, expedition_bottom_bar.dart, backpack_sheet.dart)
         ├── room/                # 2D room scene & combat overlays (pixel_room_view.dart, room_interior_content.dart, etc.)

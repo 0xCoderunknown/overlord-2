@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import '../data/game_database.dart';
 import '../data/vault_archive/item_database.dart';
 import '../domain/models.dart';
 import '../domain/vault_models.dart';
@@ -11,6 +12,13 @@ class BunkerManager extends ChangeNotifier {
   List<Scavenger> roster = [];
   String? lastDebrief;
   int expeditionCount = 0;
+
+  // Megabonk-style lifetime stats & unlocks
+  int totalKills = 0;
+  int ratsKilled = 0;
+  int bossesKilled = 0;
+  final Set<String> unlockedIds = {};
+  String selectedStarterId = 'starter_vance';
 
   BunkerManager() {
     _initStarterBunker();
@@ -199,10 +207,48 @@ class BunkerManager extends ChangeNotifier {
     return armors.first;
   }
 
-  /// Equips Vance from the Vault Armory and withdraws up to 3 Medkits for an expedition.
+  ScoutStarter get selectedStarter {
+    return GameDatabase.starters.firstWhere(
+      (s) => s.id == selectedStarterId,
+      orElse: () => GameDatabase.starters.first,
+    );
+  }
+
+  bool isStarterUnlocked(ScoutStarter starter) {
+    if (starter.unlockChallengeId == null) return true;
+    return unlockedIds.contains(starter.unlockChallengeId);
+  }
+
+  void selectStarter(String starterId) {
+    final starter = GameDatabase.starters.firstWhere(
+      (s) => s.id == starterId,
+      orElse: () => GameDatabase.starters.first,
+    );
+    if (!isStarterUnlocked(starter)) return;
+    selectedStarterId = starter.id;
+    notifyListeners();
+  }
+
+  int getChallengeProgress(ChallengeDef challenge) {
+    switch (challenge.statKey) {
+      case 'rats':
+        return ratsKilled;
+      case 'bosses':
+        return bossesKilled;
+      case 'kills':
+      default:
+        return totalKills;
+    }
+  }
+
+  bool isChallengeCompleted(ChallengeDef challenge) {
+    return unlockedIds.contains(challenge.id) ||
+        getChallengeProgress(challenge) >= challenge.targetCount;
+  }
+
+  /// Deploys the selected Megabonk starter with their signature low-tier gear + Bunker Medkits.
   ScoutCharacter deployExpeditionScout() {
-    final bestWeapon = getBestStashWeapon()?.toEquipmentItem();
-    final bestArmor = getBestStashArmor()?.toEquipmentItem();
+    final starter = selectedStarter;
     final availableMeds = getStashItemCount('c_medkit');
     final deployMeds = min(3, availableMeds);
 
@@ -210,27 +256,47 @@ class BunkerManager extends ChangeNotifier {
       _consumeStashItem('c_medkit', deployMeds);
     }
 
-    final name = roster.isNotEmpty ? roster.first.name : 'Vance';
     return ScoutCharacter(
-      name: name,
+      name: starter.name,
+      maxHp: starter.maxHp,
       medkits: max(1, deployMeds),
-      starterWeapon: bestWeapon,
-      starterArmor: bestArmor,
+      starterWeapon: starter.weapon,
+      starterArmor: starter.armor,
     );
   }
 
-  /// Banks extracted Gold into Caps, transfers backpack salvage into Armory Stash, and returns unused Medkits.
-  void completeExpedition({
+  /// Records lifetime kills/unlocks, banks Caps, and stores materials/consumables (no OP weapon carry-over).
+  List<ChallengeDef> completeExpedition({
     required int goldEarned,
     required List<EquipmentItem> lootedItems,
     required int unusedMedkits,
     required bool survived,
+    int kills = 0,
+    int ratKills = 0,
+    int bossKills = 0,
   }) {
     expeditionCount++;
+    totalKills += kills;
+    ratsKilled += ratKills;
+    bossesKilled += bossKills;
+
+    final newlyUnlocked = <ChallengeDef>[];
+    for (final c in GameDatabase.challenges) {
+      if (!unlockedIds.contains(c.id) &&
+          getChallengeProgress(c) >= c.targetCount) {
+        unlockedIds.add(c.id);
+        newlyUnlocked.add(c);
+      }
+    }
+
+    int bankedCount = 0;
     if (survived) {
       caps += goldEarned;
       for (final eq in lootedItems) {
-        addItemToStash(Item.fromEquipmentItem(eq));
+        if (eq.isConsumable) {
+          addItemToStash(Item.fromEquipmentItem(eq));
+          bankedCount++;
+        }
       }
       if (unusedMedkits > 0) {
         final medkitData =
@@ -238,10 +304,16 @@ class BunkerManager extends ChangeNotifier {
         addItemToStash(Item.fromDatabase(medkitData, quantity: unusedMedkits));
       }
       lastDebrief =
-          'EXTRACTED +$goldEarned CAPS & ${lootedItems.length} SALVAGE.';
+          'EXTRACTED +$goldEarned CAPS & $bankedCount SUPPLIES. +$kills KILLS.';
     } else {
-      lastDebrief = 'VANCE FLATLINED IN THE RUINS. CLONE SPUN UP.';
+      lastDebrief =
+          '${selectedStarter.name.toUpperCase()} FLATLINED. CLONE AUTO-REVIVED.';
+    }
+    if (newlyUnlocked.isNotEmpty) {
+      lastDebrief =
+          'UNLOCKED: ${newlyUnlocked.map((c) => c.title).join(', ')}!';
     }
     notifyListeners();
+    return newlyUnlocked;
   }
 }

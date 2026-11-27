@@ -6,17 +6,29 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
 
 ---
 
-## [Unreleased]
+## [0.0.6] - 27-11-2026
 
-### 🏛️ Vault Command Center & Ready Room Redesign
-- **Living Ready Bay (`BunkerReadyRoom`, `OverseerScreen`):**
-  - Replaced the static dossier card with a cutaway Vault 42 Ready Bay showing Scout Vance on the bunker floor slab alongside his equipped Weapon, Armor, and Medkits.
-  - Added live deck status badges (`BUY GEAR`, `X/50 SLOTS`, `LOCKED (10K)` / `ONLINE` / `BREWING` / `CLAIM READY`) and an Overseer PA / Last-Run Debrief ticker.
+### 🏛️ Vault Command Center, Multi-Scout Roster & Challenges
+- **Bottom-Anchored Command Deck (`OverseerScreen`):**
+  - Redesigned the Command Center with an expanded **Vault 42 // Overseer** briefing panel (`CAPS`, `RUNS`, `KILLS`, and live PA / Last-Run Debrief ticker), a 2×2 hub grid (`CHARACTERS`, `WEAPONS`, `CHALLENGES`, `MEDBAY`), and direct 3-tier Mission Cards (`T1`–`T3`) anchored in the lower thumb zone.
+  - Hid the unused `REQUISITION` store and `ARMORY STASH` tiles to keep the hub focused on missions, roster/weapons codexes, milestones, and Medbay synthesis.
+- **Playable Scouts & Direct Mission Deployment (`CharactersScreen`, `MissionScreen`):**
+  - Added 5 distinct starters with unique HP, starter weapons/armor, and inspectable bios: **Vance**, **Shina**, **Drifter**, **Sentry Bot**, and unlockable **Alley Cat**.
+  - Clicking any mission card on `OverseerScreen` opens `MissionScreen` to pick your scout and drop straight into the facility.
+- **Weapons Codex & Challenges Tracker (`WeaponsScreen`, `ChallengesScreen`):**
+  - Added `WeaponsScreen` to inspect all Tier 1–3 and unlockable weapons, and `ChallengesScreen` to track milestone progress (*Slugger Initiate*, *Rat Exterminator*, *Apex Survivor*).
+
+### 📱 Mobile Chrome Frame, Auto-Follow Camera & Wasteland Rations
+- **Mobile-Sized Browser Frame & Smooth Camera:**
+  - Framed Chrome web runs inside a `420×860` mobile viewport so desktop play matches phone proportions.
+  - Added smooth auto-follow camera panning in `ExpeditionScreen` so the view tracks your scout automatically across rooms and floors.
+- **Fallout-Style Field Rations & Backpack Auto-Equip:**
+  - Added wasteland food items (*Purified Water*, *Canned Dog Food*, *Rad-Radish*, *Dirty Water*, *Spoiled Canned Meat*) usable out of combat, plus one-tap best-gear auto-equip in `BackpackSheet`.
 
 ### 💬 Call-and-Response Banter, Boss Taunts & Indoor Lore
 - **Sequential Combat Banter:**
-  - Updated combat banter to play sequentially (`2.0s` enemy taunt $\rightarrow$ `1.4s` Vance reply) without a 3-round cap, keeping banter visible even when Stealthboys or Emergency Heal are active.
-  - Added breathing space after room entry (`450ms`), during enemy knockdowns, and before Vance's post-fight scrap quip.
+  - Updated combat banter to play sequentially (`2.0s` enemy taunt $\rightarrow$ `1.4s` scout reply) without a 3-round cap, keeping banter visible even when Stealthboys or Emergency Heal are active.
+  - Added breathing space after room entry (`450ms`), during enemy knockdowns, and before post-fight scrap quips.
 - **Enemy-Matched & Boss Dialogue:**
   - Added *Bad Boys II*-style absurd random-word confusion lines for mutated animals & Turkey, feral ghoul rasps, robotic `Pre-War Battlemech` lines, and *Borderlands 1* Sledge-inspired Apex Boss taunts (timed cleanly after the boss intro overlay).
 - **Indoor Room-Type Lore:**

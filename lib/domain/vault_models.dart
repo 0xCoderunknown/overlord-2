@@ -138,6 +138,10 @@ class Item {
       typeStr = 'material';
       img = 'assets/images/items/medkit.png';
       stackable = true;
+    } else if (eq.consumableEffect == ConsumableEffect.food) {
+      typeStr = 'food';
+      img = 'assets/images/items/can_food.png';
+      stackable = true;
     } else {
       typeStr = 'consumable';
       img = 'assets/images/items/medkit.png';

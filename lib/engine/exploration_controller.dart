@@ -35,11 +35,14 @@ class ExplorationController extends ChangeNotifier {
   bool isEnemyAggroed = false;
   String? scrapBannerText;
 
-  // Death State Transitions (0.5s standing at 0 HP -> 1.0s lying on ground -> scrap/defeat)
+  // Death State Transitions & Run Kill Counters
   bool isEnemyLyingOnGround = false;
   bool isHeroLyingOnGround = false;
   bool isDefeatScreenVisible = false;
   bool isBossIntroActive = false;
+  int sessionKills = 0;
+  int sessionRatsKilled = 0;
+  int sessionBossesKilled = 0;
 
   ExplorationController({
     required this.building,
@@ -405,6 +408,14 @@ class ExplorationController extends ChangeNotifier {
     isShakingEnemy = false;
     activeBanter = null;
     isHeroReplyingToBanter = false;
+
+    final slain = targetRoom.enemy;
+    if (slain != null) {
+      sessionKills++;
+      if (slain.name.toLowerCase().contains('rat')) sessionRatsKilled++;
+      if (slain.isBoss) sessionBossesKilled++;
+    }
+
     targetRoom.scrapPile = generator.generateScrapPile(currentFloorIndex);
     targetRoom.state = RoomState.cleared;
     _revealAdjacentRooms(currentFloorIndex, currentRoomIndex);
@@ -607,11 +618,68 @@ class ExplorationController extends ChangeNotifier {
           player.keys++;
           lastEventLog = '"Pocketed Master Key."';
           break;
+        case ConsumableEffect.food:
+          if (activeCombat?.status == CombatStatus.inProgress) {
+            player.backpack.insert(index, item);
+            lastEventLog = '"Not while something\'s swinging at me!"';
+            notifyListeners();
+            return;
+          }
+          _consumeFood(item);
+          break;
         default:
           break;
       }
     }
     notifyListeners();
+  }
+
+  void _consumeFood(EquipmentItem food) {
+    final poisonRisk = food.maxStat;
+    if (poisonRisk > 0 && generator.rng.nextInt(100) < poisonRisk) {
+      final dmg = 4 + generator.rng.nextInt(4);
+      player.currentHp = (player.currentHp - dmg).clamp(1, player.maxHp);
+      isShakingHero = true;
+      heroDamagePopup = '-$dmg';
+      lastEventLog = '"Ugh... ${food.name} was a terrible idea. (-$dmg HP)"';
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (!_disposed) {
+          isShakingHero = false;
+          notifyListeners();
+        }
+      });
+    } else {
+      final healAmt = food.minStat;
+      player.heal(healAmt);
+      heroDamagePopup = '+$healAmt';
+      lastEventLog = '"Downed ${food.name}. Feels good enough. (+$healAmt HP)"';
+    }
+  }
+
+  void autoEquipBest() {
+    bool changed = false;
+    for (int i = player.backpack.length - 1; i >= 0; i--) {
+      final item = player.backpack[i];
+      if (item.isWeapon &&
+          (item.minStat + item.maxStat) >
+              (player.equippedWeapon.minStat + player.equippedWeapon.maxStat)) {
+        final old = player.equippedWeapon;
+        player.equippedWeapon = item;
+        player.backpack[i] = old;
+        changed = true;
+      } else if (item.isArmor &&
+          (item.minStat + item.maxStat) >
+              (player.equippedArmor.minStat + player.equippedArmor.maxStat)) {
+        final old = player.equippedArmor;
+        player.equippedArmor = item;
+        player.backpack[i] = old;
+        changed = true;
+      }
+    }
+    if (changed) {
+      lastEventLog = '"Equipped best gear from my pack."';
+      notifyListeners();
+    }
   }
 
   @override

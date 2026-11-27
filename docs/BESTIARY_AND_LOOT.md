@@ -1,7 +1,7 @@
 # OVERLORD 2 // Bestiary & Equipment Field Compendium
 
 > **DOCUMENT ID:** `OV2-DB-001`  
-> **DATE:** 22-11-2026  
+> **DATE:** 27-11-2026  
 > **CLEARANCE:** INFILTRATION SQUAD READY  
 
 ---
@@ -66,9 +66,32 @@ $$\text{Net Damage Taken} = \max(0, \text{Enemy Roll} - \text{Armor DR Roll})$$
 
 ---
 
-## 💊 4. Field Consumables
+## 💊 4. Field Consumables, Rations & Crafting Materials
 
-* **Wasteland Trauma Medkit:** Restores $+50\text{ HP}$ on use or during in-room combat.
-* **Combat Psycho Chem:** Adrenaline booster granting $+6\text{ DMG}$ on your next battle strike.
-* **Stealthboy Cloak Unit:** Light-bending field module allowing silent passage.
-* **Security Master Key:** Heavy brass key used to breach reinforced high-tier vault safes.
+### Tactical Consumables
+* **Wasteland Trauma Medkit:** Restores $+50\text{ HP}$ during combat when Scout HP drops to $\le 25\%$.
+* **Combat Psycho Chem:** Adrenaline booster granting $+6\text{ DMG}$ in battle.
+* **Stealthboy Cloak Unit:** Light-bending field module allowing silent bypass of non-boss hostile rooms.
+* **Security Master Key:** Heavy brass key used to breach reinforced vault safes.
+
+### Wasteland Rations (Out-of-Combat Only)
+* **Purified Water:** $+15\text{ HP}$ (safe).
+* **Canned Dog Food:** $+10\text{ HP}$ (safe).
+* **Rad-Radish:** $+12\text{ HP}$ ($25\%$ rad-burn risk).
+* **Dirty Water:** $+8\text{ HP}$ ($35\%$ sickness risk).
+* **Spoiled Canned Meat:** $+15\text{ HP}$ ($40\%$ food poisoning risk).
+
+### Medbay Synthesis Materials
+* **Used Syringe**, **Irradiated Herb**, **Expired Chemicals** — scavenged from Medical Cabinets and banked for Medbay Medkit crafting.
+
+---
+
+## 🧑‍🚀 5. Playable Scouts & Starters
+
+| Scout | Title | Max HP | Starter Weapon | Starter Armor | Unlock |
+|---|---|---|---|---|---|
+| **Vance** | Vault Scout | 100 | Crude Pipe Pistol (`6–12 DMG`) | Taped Phonebook (`2–4 DR`) | Starter |
+| **Shina** | Agile Scout | 80 | Heavy Staple Gun (`5–11 DMG`) | Boiled Leather (`2–5 DR`) | Starter |
+| **Drifter** | Wasteland Scavenger | 100 | Rusted Rebar Club (`7–12 DMG`) | Taped Phonebook (`2–4 DR`) | Starter |
+| **Sentry Bot** | Heavy Automaton | 150 | Car Battery Set (`4–15 DMG`) | Welded Scrap Plate (`4–7 DR`) | Starter |
+| **Alley Cat** | Feral Striker | 90 | Razor Claws (`8–13 DMG`) | Matted Thick Fur (`1–4 DR`) | **Rat Exterminator** (`15` Mutated Rats) |

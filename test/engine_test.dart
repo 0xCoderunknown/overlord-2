@@ -358,6 +358,68 @@ void main() {
       controller.dispose();
     });
 
+    test('Fallout food works out of combat, is blocked in combat, and autoEquipBest upgrades gear', () {
+      final building = Building(
+        id: 'b_food',
+        name: 'Test Food',
+        floors: [
+          Floor(
+            floorIndex: 0,
+            rooms: [
+              Room(
+                floorIndex: 0,
+                roomIndex: 0,
+                type: RoomType.entrance,
+                contentType: ContentType.empty,
+                state: RoomState.active,
+              ),
+              Room(
+                floorIndex: 0,
+                roomIndex: 1,
+                type: RoomType.corridor,
+                contentType: ContentType.enemy,
+                state: RoomState.outline,
+                enemy: Enemy(name: 'Mutated Rat', maxHp: 50, minDamage: 1, maxDamage: 2),
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final player = ScoutCharacter(name: 'Vance', maxHp: 100);
+      player.currentHp = 60;
+      player.backpack.add(GameDatabase.foods.first); // Purified Water (+15 HP, 0% risk)
+      player.backpack.add(
+        const EquipmentItem(
+          id: 'w_plasma',
+          name: 'Plasma Torch',
+          type: ItemType.weapon,
+          minStat: 22,
+          maxStat: 34,
+          scrapValue: 15,
+        ),
+      );
+
+      final controller = ExplorationController(building: building, player: player);
+
+      // Out of combat: eat Purified Water
+      controller.equipFromBackpack(0);
+      expect(player.currentHp, 75);
+
+      // Auto-equip best weapon
+      controller.autoEquipBest();
+      expect(player.equippedWeapon.name, 'Plasma Torch');
+
+      // In combat: eating food is blocked
+      player.backpack.add(GameDatabase.foods.first);
+      controller.moveTo(0, 1);
+      final bagBefore = player.backpack.length;
+      controller.equipFromBackpack(player.backpack.length - 1);
+      expect(player.backpack.length, bagBefore);
+      expect(controller.lastEventLog, contains('swinging'));
+      controller.dispose();
+    });
+
     test('ambient lore is displayed when moving into empty rooms', () {
       final building = Building(
         id: 'b1',

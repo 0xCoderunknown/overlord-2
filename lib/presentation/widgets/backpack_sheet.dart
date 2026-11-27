@@ -8,11 +8,15 @@ import 'terminal/item_grid_card.dart';
 class BackpackSheet extends StatefulWidget {
   final ScoutCharacter player;
   final void Function(int index) onUseOrEquip;
+  final VoidCallback? onAutoEquip;
+  final bool inCombat;
 
   const BackpackSheet({
     super.key,
     required this.player,
     required this.onUseOrEquip,
+    this.onAutoEquip,
+    this.inCombat = false,
   });
 
   @override
@@ -93,6 +97,38 @@ class _BackpackSheetState extends State<BackpackSheet> {
                             ),
                           ],
                         ),
+                        if (!widget.inCombat &&
+                            widget.onAutoEquip != null &&
+                            items.any((i) => i.isWeapon || i.isArmor)) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: PixelTheme.neonGreen,
+                                shape: const RoundedRectangleBorder(),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () {
+                                widget.onAutoEquip!();
+                                setState(() {});
+                              },
+                              child: Text(
+                                'AUTO-EQUIP BEST',
+                                style: PixelTheme.pixelStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: PixelTheme.roomVoid,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 10),
                         Row(
                           children: [

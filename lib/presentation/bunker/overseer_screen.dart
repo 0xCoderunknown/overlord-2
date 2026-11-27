@@ -1,15 +1,14 @@
 import 'package:material_ui/material_ui.dart';
 import '../../core/pixel_theme.dart';
 import '../../data/banter_database.dart';
-import '../../domain/vault_models.dart';
+import '../../data/game_database.dart';
+import '../../domain/models.dart';
 import '../../engine/bunker_manager.dart';
-import '../screens/expedition_screen.dart';
-import '../widgets/terminal/terminal_button.dart';
-import 'bunker_ready_room.dart';
-import 'contract_picker_dialog.dart';
+import 'characters_screen.dart';
+import 'challenges_screen.dart';
 import 'facility_screen.dart';
-import 'market_screen.dart';
-import 'stash_screen.dart';
+import 'mission_screen.dart';
+import 'weapons_screen.dart';
 
 class OverseerScreen extends StatefulWidget {
   final BunkerManager? bunkerManager;
@@ -40,6 +39,12 @@ class _OverseerScreenState extends State<OverseerScreen> {
     super.dispose();
   }
 
+  Color _contractColor(ExpeditionContract contract) {
+    if (contract.hazardLevel >= 3) return PixelTheme.alertRed;
+    if (contract.hazardLevel == 2) return PixelTheme.warningAmber;
+    return PixelTheme.neonGreen;
+  }
+
   String get _medbayBadge {
     if (_bunker.medbay.outputReady) return 'CLAIM READY';
     if (_bunker.medbay.isCrafting) return 'BREWING';
@@ -59,7 +64,6 @@ class _OverseerScreenState extends State<OverseerScreen> {
     final quips = BanterDatabase.overseerQuips;
     final paMessage = _bunker.lastDebrief ??
         quips[_bunker.expeditionCount % quips.length];
-    final scout = _bunker.roster.isNotEmpty ? _bunker.roster.first : null;
 
     return Scaffold(
       backgroundColor: PixelTheme.background,
@@ -67,7 +71,7 @@ class _OverseerScreenState extends State<OverseerScreen> {
         title: Text(
           'VAULT COMMAND CENTER',
           style: PixelTheme.pixelStyle(
-            fontSize: 13,
+            fontSize: 15,
             letterSpacing: 2,
             fontWeight: FontWeight.bold,
             color: PixelTheme.neonGreen,
@@ -82,140 +86,146 @@ class _OverseerScreenState extends State<OverseerScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. Overseer Command Header + Vault PA Strip
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: PixelTheme.pixelBox(
-                  background: PixelTheme.roomVoid,
-                  borderColor: PixelTheme.borderPixel,
-                ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final minBodyHeight = (constraints.maxHeight - 28).clamp(
+              0.0,
+              double.infinity,
+            );
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: minBodyHeight),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: PixelTheme.neonGreen),
-                          ),
-                          child: Image.asset(
-                            'assets/images/char/overseer.webp',
-                            fit: BoxFit.cover,
-                            filterQuality: FilterQuality.none,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(
-                              Icons.person,
-                              color: PixelTheme.neonGreen,
-                              size: 36,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
+                    // 1. Overseer Command Briefing Panel
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: PixelTheme.pixelBox(
+                        background: PixelTheme.roomVoid,
+                        borderColor: PixelTheme.borderPixel,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'VAULT 42 // OVERSEER',
-                                style: PixelTheme.pixelStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: PixelTheme.neonGreen,
+                              Container(
+                                width: 92,
+                                height: 92,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: PixelTheme.neonGreen,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Image.asset(
+                                  'assets/images/char/overseer.webp',
+                                  fit: BoxFit.cover,
+                                  filterQuality: FilterQuality.none,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(
+                                    Icons.person,
+                                    color: PixelTheme.neonGreen,
+                                    size: 44,
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  _StatBadge(
-                                    label: 'CAPS',
-                                    value: '${_bunker.caps}',
-                                    color: PixelTheme.chestGold,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _StatBadge(
-                                    label: 'STASH',
-                                    value:
-                                        '${_bunker.globalStash.length}/${GameConfig.maxStashSize}',
-                                    color: PixelTheme.elevatorCyan,
-                                  ),
-                                ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'VAULT 42 // OVERSEER',
+                                      style: PixelTheme.pixelStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: PixelTheme.neonGreen,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 6,
+                                      children: [
+                                        _StatBadge(
+                                          label: 'CAPS',
+                                          value: '${_bunker.caps}',
+                                          color: PixelTheme.chestGold,
+                                        ),
+                                        _StatBadge(
+                                          label: 'RUNS',
+                                          value: '${_bunker.expeditionCount}',
+                                          color: PixelTheme.elevatorCyan,
+                                        ),
+                                        _StatBadge(
+                                          label: 'KILLS',
+                                          value: '${_bunker.totalKills}',
+                                          color: PixelTheme.alertRed,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'FILTERS: 64% • RADS: NOMINAL',
+                                      style: PixelTheme.pixelStyle(
+                                        fontSize: 10,
+                                        color: PixelTheme.textMuted,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      color: PixelTheme.roomUnrevealed,
-                      child: Text(
-                        '> $paMessage',
-                        style: PixelTheme.pixelStyle(
-                          fontSize: 8,
-                          color: _bunker.lastDebrief != null
-                              ? PixelTheme.warningAmber
-                              : PixelTheme.textLight,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // 2. Primary Launch Button
-              TerminalButton(
-                text: '>> LAUNCH FACILITY EXPEDITION <<',
-                borderColor: PixelTheme.neonGreen,
-                textColor: PixelTheme.roomVoid,
-                backgroundColor: PixelTheme.neonGreen,
-                padding: 13,
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => ContractPickerDialog(
-                      onSelect: (contract) {
-                        Navigator.of(ctx).pop();
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ExpeditionScreen(
-                              bunkerManager: _bunker,
-                              contract: contract,
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            color: PixelTheme.roomUnrevealed,
+                            child: Text(
+                              paMessage,
+                              style: PixelTheme.pixelStyle(
+                                fontSize: 11,
+                                color: _bunker.lastDebrief != null
+                                    ? PixelTheme.warningAmber
+                                    : PixelTheme.textLight,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        );
-                      },
+                        ],
+                      ),
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: 10),
+                    const SizedBox(height: 14),
 
-              // 3. Vault Decks with Live Status Badges
+                    // 2. Bottom-Anchored Command Deck & Direct Mission Selector
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+
+              // 2. Codex & Vault Decks (2x2 Grid)
               Row(
                 children: [
                   Expanded(
                     child: _DeckTile(
-                      title: 'REQUISITION',
-                      subtitle: 'BUY GEAR',
-                      icon: Icons.storefront,
-                      accent: PixelTheme.chestGold,
+                      title: 'CHARACTERS',
+                      subtitle: 'ROSTER & BIOS',
+                      icon: Icons.groups,
+                      accent: PixelTheme.neonGreen,
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => MarketScreen(bunkerManager: _bunker),
+                          builder: (_) =>
+                              CharactersScreen(bunkerManager: _bunker),
                         ),
                       ),
                     ),
@@ -223,14 +233,33 @@ class _OverseerScreenState extends State<OverseerScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: _DeckTile(
-                      title: 'ARMORY STASH',
+                      title: 'WEAPONS',
+                      subtitle: 'ARMORY CODEX',
+                      icon: Icons.gavel,
+                      accent: PixelTheme.chestGold,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => WeaponsScreen(bunkerManager: _bunker),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _DeckTile(
+                      title: 'CHALLENGES',
                       subtitle:
-                          '${_bunker.globalStash.length}/${GameConfig.maxStashSize} SLOTS',
-                      icon: Icons.inventory_2,
+                          '${GameDatabase.challenges.where(_bunker.isChallengeCompleted).length}/${GameDatabase.challenges.length} UNLOCKED',
+                      icon: Icons.emoji_events,
                       accent: PixelTheme.elevatorCyan,
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => StashScreen(bunkerManager: _bunker),
+                          builder: (_) =>
+                              ChallengesScreen(bunkerManager: _bunker),
                         ),
                       ),
                     ),
@@ -251,19 +280,97 @@ class _OverseerScreenState extends State<OverseerScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
-              // 4. Living Ready Room (Cutaway Vault Bay)
-              Expanded(
-                child: BunkerReadyRoom(
-                  scout: scout,
-                  bestWeapon: _bunker.getBestStashWeapon(),
-                  bestArmor: _bunker.getBestStashArmor(),
-                  medkitCount: _bunker.getStashItemCount('c_medkit'),
+              // 3. Direct Mission Selector (Click Mission -> Select Scout -> Drop)
+              Text(
+                '[ SELECT MISSION TO DEPLOY ]',
+                style: PixelTheme.pixelStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: PixelTheme.neonGreen,
                 ),
               ),
-            ],
-          ),
+              const SizedBox(height: 8),
+              ...GameDatabase.contracts.map((contract) {
+                final color = _contractColor(contract);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: InkWell(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => MissionScreen(
+                          bunkerManager: _bunker,
+                          initialContract: contract,
+                        ),
+                      ),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: PixelTheme.pixelBox(
+                        background: PixelTheme.roomVoid,
+                        borderColor: color,
+                        borderWidth: 1.5,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 4,
+                            ),
+                            decoration: PixelTheme.pixelBox(
+                              background: color.withValues(alpha: 0.14),
+                              borderColor: color,
+                              borderWidth: 1,
+                            ),
+                            child: Text(
+                              'T${contract.hazardLevel}',
+                              style: PixelTheme.pixelStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  contract.title,
+                                  style: PixelTheme.pixelStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: color,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  contract.subtitle.toUpperCase(),
+                                  style: PixelTheme.pixelStyle(
+                                    fontSize: 10.5,
+                                    color: PixelTheme.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.play_arrow, color: color, size: 22),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -292,7 +399,7 @@ class _StatBadge extends StatelessWidget {
       child: Text(
         '$label: $value',
         style: PixelTheme.pixelStyle(
-          fontSize: 9,
+          fontSize: 11,
           fontWeight: FontWeight.bold,
           color: color,
         ),
@@ -321,7 +428,7 @@ class _DeckTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: PixelTheme.pixelBox(
           background: PixelTheme.roomVoid,
           borderColor: PixelTheme.borderPixel,
@@ -329,14 +436,14 @@ class _DeckTile extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: accent, size: 18),
-            const SizedBox(height: 4),
+            Icon(icon, color: accent, size: 22),
+            const SizedBox(height: 5),
             Text(
               title,
               style: PixelTheme.pixelStyle(
-                fontSize: 8,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: PixelTheme.neonGreen,
+                color: PixelTheme.textLight,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -346,7 +453,7 @@ class _DeckTile extends StatelessWidget {
             Text(
               subtitle,
               style: PixelTheme.pixelStyle(
-                fontSize: 7,
+                fontSize: 9.5,
                 fontWeight: FontWeight.bold,
                 color: accent,
               ),

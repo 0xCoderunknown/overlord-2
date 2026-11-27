@@ -14,11 +14,11 @@
 [![Target: Chrome](https://img.shields.io/badge/Web-Google%20Chrome-4285F4?logo=googlechrome)](https://www.google.com/chrome/)
 [![Target: Android](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android)](https://www.android.com)
 [![Privacy](https://img.shields.io/badge/100%25%20Offline-Zero%20Trackers-brightgreen)](#-100-offline--zero-bloat)
-[![Changelog](https://img.shields.io/badge/Changelog-0.0.4-green.svg)](CHANGELOG.md)
+[![Changelog](https://img.shields.io/badge/Changelog-0.0.6-green.svg)](CHANGELOG.md)
 
 **Overlord 2** is a gritty 2D side-cutaway pixel-art dungeon crawler inspired by *Fallout Shelter* and *Dead Cells*.
 
-You're the Overseer of Vault Bunker 42. Dispatch **Scout Vance** alone into ruined, radiation-soaked pre-war facilities—breach rooms, survive 1v1 ambushes, crack open scrap piles, ride rickety elevators, and take down the apex monstrosity waiting on the roof.
+You're the Overseer of Vault Bunker 42. Pick a mission contract, choose your scout (**Vance**, **Shina**, **Drifter**, **Sentry Bot**, or unlockable **Alley Cat**), and drop into ruined, radiation-soaked pre-war facilities—breach rooms, survive 1v1 ambushes, crack open scrap piles, ride rickety elevators, and take down the apex monstrosity waiting on the roof.
 
 ```
                   ┌──────────────┬──────────────┬──────────────┬────────┐
@@ -36,22 +36,23 @@ You're the Overseer of Vault Bunker 42. Dispatch **Scout Vance** alone into ruin
 
 ### 🏢 One Living Cutaway Building
 No split minimaps or detached battle arenas. Everything happens right inside the building cross-section:
-* **Pan, Zoom & Breach:** Drag and zoom freely across floors. Tap glowing doorways (`ENTER`) to push into the fog of war.
+* **Auto-Follow Camera & Breach:** The camera smoothly tracks your scout as you move between rooms and floors (with free manual pan/zoom anytime). Tap glowing doorways (`ENTER`) to push into the fog of war.
 * **Backtrack Through Cleared Rooms:** Hostile rooms lock down until the fight is over. Once cleared, walk freely back (`RETURN`) to reach the rickety elevator shaft (`BOARD`) and climb to the next floor.
-* **Eyes on the Action:** Your HP bar sits right over Vance's head, enemy HP bars sit over theirs, and all of Vance's solo banter and room observations appear right inside the room.
+* **Eyes on the Action:** Your HP bar sits right over your scout's head, enemy HP bars sit over theirs, and sequential two-way banter and room observations appear right inside the room.
 
 ### ⚔️ Snappy 1v1 Room Duels
-* **Aggro & Impact:** Enemies step forward when they spot Vance. Every strike shakes the target, flashes on impact, and pops floating numbers straight off the fighter—amber/red damage (`-14`), cyan armor blocks (`BLOCKED`), or green medkit heals (`+50`).
-* **No Walls of Math:** No cluttered turn banners or combat spreadsheets—just crisp animations and Vance muttering to himself in the dark.
+* **Aggro & Impact:** Enemies step forward when they spot your scout. Every strike shakes the target, flashes on impact, and pops floating numbers straight off the fighter—amber/red damage (`-14`), cyan armor blocks (`BLOCKED`), or green medkit heals (`+50`).
+* **No Walls of Math:** No cluttered turn banners or combat spreadsheets—just crisp animations and two-way combat banter.
 * **Dramatic Knockdowns:** Defeated fighters freeze at `0 HP`, tip `90°` flat onto the steel floor, and dissolve into a searchable scrap pile.
 
-### 🧰 Scavenging & 25% Critical Triage
-* **Loot or Scrap:** Tap `[SCRAP PILE]` drops to scavenge. Empty piles flash `EMPTY JUNK` and fade away; lucky finds (`25%` chance) let you compare stats and either `[EQUIP]` (auto-scrapping your old gear for Gold) or `[SCRAP]` on the spot.
-* **Emergency Medkits:** Trauma Medkits stay locked until Vance drops to **25% HP or lower**—pop one at the brink of death to swing a losing duel.
+### 🧰 Direct Scavenging, Rations & 25% Critical Triage
+* **Direct-to-Backpack Loot:** Tap `[SCRAP PILE]` drops to scavenge. Empty piles flash `EMPTY JUNK` and fade away; lucky finds go straight into your **Backpack** (`ExpeditionBottomBar`), where you can inspect items, eat wasteland rations out of combat, or tap to auto-equip best gear.
+* **Stealthboy Bypass & Events:** Use Stealthboys to slip past non-boss hostile rooms, and breach sealed Floor Safes, Med Cabinets, and Tripwire Traps.
+* **Emergency Medkits:** Trauma Medkits stay locked until your scout drops to **25% HP or lower**—pop one at the brink of death to swing a losing duel.
 
 ### 🏛️ Vault Bunker 42 (Between Runs)
-* **Requisition & Stash:** Spend Caps on weapons, armor, and supplies, and manage your 50-slot Armory Stash.
-* **Medbay Synthesis:** Unlock the Medbay for `10,000` Caps to brew, overclock, and claim fresh Trauma Medkits before heading back out.
+* **Command Deck & Direct Deployment:** View the **Characters** roster, **Weapons** codex, and **Challenges** milestones, then tap any of the 3 mission tiers (`ABANDONED CLINIC`, `INDUSTRIAL DEPOT`, `BLACK-SITE BUNKER`) to select your scout and deploy.
+* **Medbay Synthesis:** Unlock the Medbay for `10,000` Caps to brew, overclock, and claim fresh Trauma Medkits from scavenged medical materials.
 
 ---
 

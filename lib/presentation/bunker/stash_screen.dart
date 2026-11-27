@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import '../../core/app_theme.dart';
+import '../../core/pixel_theme.dart';
+import '../../data/game_database.dart';
 import '../../domain/vault_models.dart';
 import '../../engine/bunker_manager.dart';
 import '../widgets/terminal/item_grid_card.dart';
@@ -172,30 +174,102 @@ class _StashScreenState extends State<StashScreen> {
           child: Container(color: AppTheme.green.withValues(alpha: 0.4), height: 1.0),
         ),
       ),
-      body: stash.isEmpty
-          ? Center(
-              child: Text(
-                '[ ARMORY STASH EMPTY ]',
-                style: AppTheme.retroText(color: AppTheme.grey, letterSpacing: 2),
-              ),
-            )
-          : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.85,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: stash.length,
-              itemBuilder: (context, index) {
-                final item = stash[index];
-                return ItemGridCard(
-                  item: item,
-                  onTap: () => _showItemInspectionModal(context, item),
-                );
-              },
+      body: Column(
+        children: [
+          // Challenges & Unlocks Tracker
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.bgBlack,
+              border: Border.all(color: PixelTheme.borderPixel, width: 1.5),
             ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  '[ CHALLENGES & UNLOCKS ]',
+                  style: AppTheme.retroText(
+                    color: PixelTheme.neonGreen,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                ...GameDatabase.challenges.map((c) {
+                  final progress = widget.bunkerManager.getChallengeProgress(c);
+                  final done = widget.bunkerManager.isChallengeCompleted(c);
+                  final color =
+                      done ? PixelTheme.neonGreen : PixelTheme.warningAmber;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          done ? Icons.check_box : Icons.lock_outline,
+                          size: 13,
+                          color: color,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '${c.title}: ${c.rewardLabel}',
+                            style: AppTheme.retroText(
+                              color: done ? AppTheme.white : AppTheme.grey,
+                              fontSize: 10,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          done
+                              ? 'UNLOCKED'
+                              : '${progress.clamp(0, c.targetCount)}/${c.targetCount}',
+                          style: AppTheme.retroText(
+                            color: color,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          Expanded(
+            child: stash.isEmpty
+                ? Center(
+                    child: Text(
+                      '[ ARMORY STASH EMPTY ]',
+                      style: AppTheme.retroText(
+                        color: AppTheme.grey,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.85,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                    itemCount: stash.length,
+                    itemBuilder: (context, index) {
+                      final item = stash[index];
+                      return ItemGridCard(
+                        item: item,
+                        onTap: () => _showItemInspectionModal(context, item),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -5,6 +5,7 @@ import '../../data/game_database.dart';
 import '../../domain/models.dart';
 import '../../engine/building_generator.dart';
 import '../../engine/bunker_manager.dart';
+import '../../engine/combat_engine.dart';
 import '../../engine/exploration_controller.dart';
 import '../widgets/backpack_sheet.dart';
 import '../widgets/expedition_bottom_bar.dart';
@@ -23,12 +24,28 @@ class ExpeditionScreen extends StatefulWidget {
   State<ExpeditionScreen> createState() => _ExpeditionScreenState();
 }
 
-class _ExpeditionScreenState extends State<ExpeditionScreen> {
+class _ExpeditionScreenState extends State<ExpeditionScreen>
+    with SingleTickerProviderStateMixin {
   late ExplorationController _controller;
+  final TransformationController _transformController =
+      TransformationController();
+  late final AnimationController _cameraAnimController;
+  Animation<Matrix4>? _cameraAnimation;
+  Size _viewportSize = Size.zero;
+  int? _lastCamFloor;
+  int? _lastCamRoom;
 
   @override
   void initState() {
     super.initState();
+    _cameraAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+    )..addListener(() {
+        if (_cameraAnimation != null) {
+          _transformController.value = _cameraAnimation!.value;
+        }
+      });
     _startNewExpedition();
   }
 
@@ -41,6 +58,7 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
       roomsPerFloor: activeContract.roomsPerFloor,
       elevatorColumn: activeContract.roomsPerFloor - 1,
       bountyMultiplier: activeContract.bountyMultiplier,
+      unlockedIds: widget.bunkerManager?.unlockedIds ?? const {},
     );
     final player = widget.bunkerManager?.deployExpeditionScout() ??
         ScoutCharacter(name: 'Vance');
@@ -51,6 +69,11 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
       buildingGenerator: generator,
     );
     _controller.addListener(_onControllerUpdate);
+    _lastCamFloor = null;
+    _lastCamRoom = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _centerCameraOnActiveRoom(animate: false);
+    });
   }
 
   void _extractToBunker() {
@@ -60,6 +83,9 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
       lootedItems: player.backpack,
       unusedMedkits: player.medkits,
       survived: true,
+      kills: _controller.sessionKills,
+      ratKills: _controller.sessionRatsKilled,
+      bossKills: _controller.sessionBossesKilled,
     );
     if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
@@ -70,11 +96,64 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
 
   void _onControllerUpdate() {
     setState(() {});
+    if (_lastCamFloor != _controller.currentFloorIndex ||
+        _lastCamRoom != _controller.currentRoomIndex) {
+      _centerCameraOnActiveRoom(animate: true);
+    }
+  }
+
+  void _centerCameraOnActiveRoom({bool animate = true}) {
+    if (_viewportSize == Size.zero) return;
+    final floors = _controller.building.floors;
+    final f = _controller.currentFloorIndex;
+    final r = _controller.currentRoomIndex;
+    if (f < 0 || f >= floors.length) return;
+    final rooms = floors[f].rooms;
+    if (r < 0 || r >= rooms.length) return;
+
+    _lastCamFloor = f;
+    _lastCamRoom = r;
+
+    double roomX = 16.0 + 52.0;
+    for (int i = 0; i < r; i++) {
+      roomX += rooms[i].isElevator ? 108.0 : 298.0;
+    }
+    final activeW = rooms[r].isElevator ? 108.0 : 298.0;
+    final targetX = roomX + activeW / 2;
+
+    final visualRow = (floors.length - 1) - f;
+    final targetY = 16.0 + visualRow * 198.0 + 99.0;
+
+    final scale = _transformController.value.getMaxScaleOnAxis().clamp(0.6, 2.0);
+    final tx = _viewportSize.width / 2 - targetX * scale;
+    final ty = _viewportSize.height / 2 - targetY * scale;
+
+    final targetMatrix = Matrix4.diagonal3Values(scale, scale, 1.0)
+      ..setTranslationRaw(tx, ty, 0.0);
+
+    if (!animate) {
+      _cameraAnimController.stop();
+      _transformController.value = targetMatrix;
+      return;
+    }
+
+    _cameraAnimation = Matrix4Tween(
+      begin: _transformController.value,
+      end: targetMatrix,
+    ).animate(
+      CurvedAnimation(
+        parent: _cameraAnimController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+    _cameraAnimController.forward(from: 0);
   }
 
   @override
   void dispose() {
     _controller.removeListener(_onControllerUpdate);
+    _cameraAnimController.dispose();
+    _transformController.dispose();
     super.dispose();
   }
 
@@ -85,6 +164,8 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
       builder: (_) => BackpackSheet(
         player: _controller.player,
         onUseOrEquip: (idx) => _controller.equipFromBackpack(idx),
+        onAutoEquip: () => _controller.autoEquipBest(),
+        inCombat: _controller.activeCombat?.status == CombatStatus.inProgress,
       ),
     );
   }
@@ -234,12 +315,25 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
   Widget _buildBuildingViewport() {
     final reversedFloors = _controller.building.floors.reversed.toList();
 
-    return InteractiveViewer(
-      constrained: false,
-      boundaryMargin: const EdgeInsets.all(40),
-      minScale: 0.6,
-      maxScale: 2.0,
-      child: Container(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final newSize = Size(constraints.maxWidth, constraints.maxHeight);
+        if (_viewportSize != newSize) {
+          _viewportSize = newSize;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _lastCamFloor == null) {
+              _centerCameraOnActiveRoom(animate: false);
+            }
+          });
+        }
+
+        return InteractiveViewer(
+          transformationController: _transformController,
+          constrained: false,
+          boundaryMargin: const EdgeInsets.all(220),
+          minScale: 0.6,
+          maxScale: 2.0,
+          child: Container(
         color: PixelTheme.roomVoid,
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -318,6 +412,8 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
         ),
       ),
     );
+      },
+    );
   }
 
   Widget _buildDefeatView() {
@@ -332,6 +428,9 @@ class _ExpeditionScreenState extends State<ExpeditionScreen> {
             lootedItems: const [],
             unusedMedkits: 0,
             survived: false,
+            kills: _controller.sessionKills,
+            ratKills: _controller.sessionRatsKilled,
+            bossKills: _controller.sessionBossesKilled,
           );
           Navigator.of(context).pop();
         } else {

@@ -45,6 +45,49 @@ enum ConsumableEffect {
   stealth,
   key,
   material,
+  food,
+}
+
+class ScoutStarter {
+  final String id;
+  final String name;
+  final String title;
+  final String bio;
+  final String portraitAsset;
+  final int maxHp;
+  final EquipmentItem weapon;
+  final EquipmentItem armor;
+  final String? unlockChallengeId;
+
+  const ScoutStarter({
+    required this.id,
+    required this.name,
+    required this.title,
+    this.bio = '',
+    this.portraitAsset = 'assets/images/hero.png',
+    this.maxHp = 100,
+    required this.weapon,
+    required this.armor,
+    this.unlockChallengeId,
+  });
+}
+
+class ChallengeDef {
+  final String id;
+  final String title;
+  final String description;
+  final String statKey; // 'rats', 'kills', 'bosses'
+  final int targetCount;
+  final String rewardLabel;
+
+  const ChallengeDef({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.statKey,
+    required this.targetCount,
+    required this.rewardLabel,
+  });
 }
 
 class ExpeditionContract {

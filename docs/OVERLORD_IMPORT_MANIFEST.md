@@ -1,7 +1,7 @@
 # OVERLORD 1 $\rightarrow$ OVERLORD 2 // Master Import & Integration Manifest
 
 > **DOCUMENT ID:** `OV2-MANIFEST-001`  
-> **DATE:** 24-11-2026  
+> **DATE:** 27-11-2026  
 > **SOURCE REPOSITORY:** `../overlord-game` (Overlord 1 — relative sibling folder across PCs)  
 > **TARGET REPOSITORY:** `.` (`overlord-2`)  
 > **STATUS:** TRACKING ACTIVE VS UNUSED IMPORTS (Mark `Active` only when imported in `lib/`)  
@@ -22,23 +22,22 @@ This manifest documents **every imported asset, file, database, model, and scree
 ┌────────────────────────────────────────────────────────────────────────┐
 │             BUNKER HUB META-LAYER (OVERLORD 1 IMPORT SUITE)            │
 │                                                                        │
-│  [OverseerScreen]  ──►  [MarketScreen]   ──►  [StashScreen]            │
-│  Command Center         Requisition Store      50-Slot Armory          │
+│  [OverseerScreen]  ──►  [CharactersScreen] / [WeaponsScreen]           │
+│  Command Center         [ChallengesScreen] / [FacilityScreen]          │
 │         │                                            ▲                 │
-│         ├──────────►  [FacilityScreen]               │ (Deposits Loot) │
-│         │             Medbay Synthesis               │                 │
-│         ▼                                            │                 │
-│  >> LAUNCH EXPEDITION << ────────────────────────────┤                 │
-└─────────┼────────────────────────────────────────────┼─────────────────┘
-          │                                            │
-          ▼                                            │
-┌──────────────────────────────────────────────────────┴─────────────────┐
+│         │ (Select T1-T3 Mission)                     │ (Extracts       │
+│         ▼                                            │  Caps & Loot)   │
+│  [MissionScreen] (Pick Scout) ───────────────────────┼─────────────────┘
+└─────────┼────────────────────────────────────────────┘
+          │
+          ▼
+┌────────────────────────────────────────────────────────────────────────┐
 │            2D EXPEDITION CRAWLER (OVERLORD 2 CORE RUNTIME)             │
 │                                                                        │
 │  • Procedural Multi-Story Facilities (BuildingGenerator)               │
-│  • Dynamic 1v1 Auto-Battler with Stagger & Realistic Death Cadence     │
+│  • Auto-Follow Camera & 1v1 Auto-Battler with Realistic Death Cadence  │
 │  • Rickety Elevators, Traversal, and Cleared Sector Backtracking       │
-│  • Defeated Hostile Scrap Piles & In-Room Salvage Dialogue             │
+│  • Direct-to-Backpack Scrap Piles & Two-Way Banter (BanterEngine)      │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -52,18 +51,18 @@ This manifest documents **every imported asset, file, database, model, and scree
 | **Bunker State** | [`lib/engine/bunker_manager.dart`](file:///k:/Android/overlord-2/lib/engine/bunker_manager.dart) | `lib/engine/game_manager.dart` | ChangeNotifier | **Active** | Manages Caps treasury, global stash, scout roster, and Medbay synthesis. |
 | **Domain Models** | [`lib/domain/vault_models.dart`](file:///k:/Android/overlord-2/lib/domain/vault_models.dart) | `lib/models/game_models.dart` | Domain Models | **Active** | `Item`, `Scavenger`, `VaultFacility`, `GameConfig`, and `toEquipmentItem()` bridge. |
 | **Item Database** | [`lib/data/vault_archive/item_database.dart`](file:///k:/Android/overlord-2/lib/data/vault_archive/item_database.dart) | `lib/content/item_database.dart` | Static Archive | **Active** | Weapons (Tier 1-3), Armor (Tier 1-3), Consumables, Materials, Scrap. |
-| **Enemy Database** | [`lib/data/vault_archive/enemy_database.dart`](file:///d:/Android/overlord-2/lib/data/vault_archive/enemy_database.dart) | `lib/content/enemy_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; crawler uses `game_database.dart` & `enemy.png` (`enemies/*.png` not bundled). |
-| **Lore Database** | [`lib/data/vault_archive/lore_database.dart`](file:///d:/Android/overlord-2/lib/data/vault_archive/lore_database.dart) | `lib/content/lore_database.dart` | Static Archive | **Active** | 80+ atmospheric environmental snippets imported by `building_generator.dart`. |
-| **Incident Database** | [`lib/data/vault_archive/incident_database.dart`](file:///d:/Android/overlord-2/lib/data/vault_archive/incident_database.dart) | `lib/content/incident_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; combat outcomes & POI hazard/trap triggers ready for wiring. |
-| **Character Database** | [`lib/data/vault_archive/character_database.dart`](file:///d:/Android/overlord-2/lib/data/vault_archive/character_database.dart) | `lib/content/character_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; scavenger recruitment pool, traits, and flavor dialogue. |
-| **POI Database** | [`lib/data/vault_archive/poi_database.dart`](file:///d:/Android/overlord-2/lib/data/vault_archive/poi_database.dart) | `lib/content/poi_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; in-room safes/lockers/terminals (`poi/*.png` not bundled). |
+| **Enemy Database** | [`lib/data/vault_archive/enemy_database.dart`](file:///k:/Android/overlord-2/lib/data/vault_archive/enemy_database.dart) | `lib/content/enemy_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; crawler uses `game_database.dart` & `enemy.png` (`enemies/*.png` not bundled). |
+| **Lore Database** | [`lib/data/vault_archive/lore_database.dart`](file:///k:/Android/overlord-2/lib/data/vault_archive/lore_database.dart) | `lib/content/lore_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; `game_database.dart` supplies indoor & ambient lore pools. |
+| **Incident Database** | [`lib/data/vault_archive/incident_database.dart`](file:///k:/Android/overlord-2/lib/data/vault_archive/incident_database.dart) | `lib/content/incident_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; combat outcomes & POI hazard/trap triggers ready for wiring. |
+| **Character Database** | [`lib/data/vault_archive/character_database.dart`](file:///k:/Android/overlord-2/lib/data/vault_archive/character_database.dart) | `lib/content/character_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; `game_database.dart` `starters` powers the active 5-scout roster. |
+| **POI Database** | [`lib/data/vault_archive/poi_database.dart`](file:///k:/Android/overlord-2/lib/data/vault_archive/poi_database.dart) | `lib/content/poi_database.dart` | Static Archive | **Unused (Standby)** | 0 imports in `lib/`; in-room safes/lockers/terminals (`poi/*.png` not bundled). |
 | **Terminal Container** | [`lib/presentation/widgets/terminal/terminal_container.dart`](file:///k:/Android/overlord-2/lib/presentation/widgets/terminal/terminal_container.dart) | `lib/widgets/terminal_container.dart` | UI Widget | **Active** | High-contrast retro CRT bounding boxes for panels, banners, and modals. |
 | **Terminal Button** | [`lib/presentation/widgets/terminal/terminal_button.dart`](file:///k:/Android/overlord-2/lib/presentation/widgets/terminal/terminal_button.dart) | `lib/widgets/terminal_button.dart` | UI Widget | **Active** | Monospace terminal buttons with border glows and disabled null handling. |
 | **Item Grid Card** | [`lib/presentation/widgets/terminal/item_grid_card.dart`](file:///k:/Android/overlord-2/lib/presentation/widgets/terminal/item_grid_card.dart) | `lib/widgets/item_grid_card.dart` | UI Widget | **Active** | Tier-colored inventory and shop cards displaying sprite, stats, and badges. |
 | **Event Modal** | [`lib/presentation/widgets/terminal/event_modal.dart`](file:///k:/Android/overlord-2/lib/presentation/widgets/terminal/event_modal.dart) | `lib/widgets/event_modal.dart` | UI Widget | **Active** | Retro bottom sheets and alert dialogs for choices, inspection, and loot. |
-| **Overseer Hub** | [`lib/presentation/bunker/overseer_screen.dart`](file:///k:/Android/overlord-2/lib/presentation/bunker/overseer_screen.dart) | `lib/screens/overseer_screen.dart` | Presentation | **Active** | Primary app home: Overseer status, Caps ledger, Scout Vance dossier, and crawler launch. |
-| **Requisition Market**| [`lib/presentation/bunker/market_screen.dart`](file:///k:/Android/overlord-2/lib/presentation/bunker/market_screen.dart) | `lib/screens/market_screen.dart` | Presentation | **Active** | Paid Requisition store for deploying with upgraded guns, armor, and medkits. |
-| **Armory Stash** | [`lib/presentation/bunker/stash_screen.dart`](file:///k:/Android/overlord-2/lib/presentation/bunker/stash_screen.dart) | `lib/screens/stash_screen.dart` | Presentation | **Active** | 50-slot global vault storage with single and bulk liquidation for Caps. |
+| **Overseer Hub** | [`lib/presentation/bunker/overseer_screen.dart`](file:///k:/Android/overlord-2/lib/presentation/bunker/overseer_screen.dart) | `lib/screens/overseer_screen.dart` | Presentation | **Active** | Primary app home: Overseer briefing, Caps/Runs/Kills ledger, 2×2 hub deck, and direct mission launch. |
+| **Requisition Market**| [`lib/presentation/bunker/market_screen.dart`](file:///k:/Android/overlord-2/lib/presentation/bunker/market_screen.dart) | `lib/screens/market_screen.dart` | Presentation | **Hidden (Standby)** | 0 imports in `OverseerScreen`; retained in `lib/` for future store re-enablement. |
+| **Armory Stash** | [`lib/presentation/bunker/stash_screen.dart`](file:///k:/Android/overlord-2/lib/presentation/bunker/stash_screen.dart) | `lib/screens/stash_screen.dart` | Presentation | **Hidden (Standby)** | 0 imports in `OverseerScreen`; replaced on the hub grid by `ChallengesScreen`. |
 | **Facility Screen** | [`lib/presentation/bunker/facility_screen.dart`](file:///k:/Android/overlord-2/lib/presentation/bunker/facility_screen.dart) | `lib/screens/facility_screen.dart` | Presentation | **Active** | Medical Bay restoration (10,000 Caps), multi-material recipe synthesis, and Medkits. |
 
 ---

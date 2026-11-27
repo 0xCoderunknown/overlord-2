@@ -14,6 +14,7 @@ class BuildingGenerator {
     int roomsPerFloor = 4,
     int elevatorColumn = 3,
     int bountyMultiplier = 1,
+    Set<String> unlockedIds = const {},
   }) {
     final floors = <Floor>[];
 
@@ -84,7 +85,7 @@ class BuildingGenerator {
           enemy = _rollEnemyForFloor(f, bountyMultiplier: bountyMultiplier);
         } else if (roll < 70) {
           contentType = ContentType.scrap;
-          scrapPile = generateScrapPile(f);
+          scrapPile = generateScrapPile(f, unlockedIds: unlockedIds);
         } else {
           contentType = ContentType.empty;
           ambient = _pickIndoorLore(type, rng);
@@ -166,13 +167,16 @@ class BuildingGenerator {
     );
   }
 
-  ScrapPile generateScrapPile(int floorIndex) {
-    // 25% chance to find loot in scrap pile
-    final hasLoot = rng.nextInt(100) < 25;
+  ScrapPile generateScrapPile(
+    int floorIndex, {
+    Set<String> unlockedIds = const {},
+  }) {
+    // 30% chance to find loot in scrap pile
+    final hasLoot = rng.nextInt(100) < 30;
     EquipmentItem? item;
 
     if (hasLoot) {
-      item = _rollScrapItem(floorIndex);
+      item = _rollScrapItem(floorIndex, unlockedIds: unlockedIds);
     }
 
     return ScrapPile(
@@ -181,8 +185,14 @@ class BuildingGenerator {
     );
   }
 
-  EquipmentItem rollSafeLoot(int floorIndex) {
-    return _rollScrapItem(min(2, floorIndex + 1));
+  EquipmentItem rollSafeLoot(
+    int floorIndex, {
+    Set<String> unlockedIds = const {},
+  }) {
+    return _rollScrapItem(
+      min(2, floorIndex + 1),
+      unlockedIds: unlockedIds,
+    );
   }
 
   EquipmentItem rollCraftingMaterial() {
@@ -190,18 +200,37 @@ class BuildingGenerator {
     return mats[rng.nextInt(mats.length)];
   }
 
-  EquipmentItem _rollScrapItem(int floorIndex) {
+  EquipmentItem _rollScrapItem(
+    int floorIndex, {
+    Set<String> unlockedIds = const {},
+  }) {
     final roll = rng.nextInt(100);
     final tier = min(3, floorIndex + 1);
 
-    // 35% Weapon, 25% Armor, 20% Consumable, 20% Medbay Material
-    if (roll < 35) {
-      final weapons = GameDatabase.getWeaponsByTier(tier);
+    // 30% Weapon, 20% Armor, 20% Fallout Food, 15% Utility Consumable, 15% Medbay Material
+    if (roll < 30) {
+      final weapons = List<EquipmentItem>.from(GameDatabase.getWeaponsByTier(tier));
+      if (tier >= 2 && unlockedIds.contains('unlock_bat')) {
+        weapons.add(
+          const EquipmentItem(
+            id: 'w_nail_bat',
+            name: 'Nail-Studded Bat',
+            type: ItemType.weapon,
+            minStat: 13,
+            maxStat: 20,
+            scrapValue: 6,
+            description: 'Unlocked slugger special. Tears through rodents.',
+          ),
+        );
+      }
       return weapons[rng.nextInt(weapons.length)];
-    } else if (roll < 60) {
+    } else if (roll < 50) {
       final armors = GameDatabase.getArmorsByTier(tier);
       return armors[rng.nextInt(armors.length)];
-    } else if (roll < 80) {
+    } else if (roll < 70) {
+      final foods = GameDatabase.foods;
+      return foods[rng.nextInt(foods.length)];
+    } else if (roll < 85) {
       final consumables = GameDatabase.consumables;
       return consumables[rng.nextInt(consumables.length)];
     } else {

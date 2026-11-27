@@ -34,66 +34,74 @@ class PixelHud extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Text(
-                    'SCOUT: ${player.name.toUpperCase()}',
-                    style: PixelTheme.pixelStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: PixelTheme.neonGreen,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${player.currentHp}/${player.maxHp} HP',
-                    style: PixelTheme.pixelStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: hpColor,
-                    ),
-                  ),
-                  if (player.psychoActive) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      color: PixelTheme.alertRed,
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
                       child: Text(
-                        'PSYCHO',
+                        player.name.toUpperCase(),
                         style: PixelTheme.pixelStyle(
-                          fontSize: 8,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: PixelTheme.roomVoid,
+                          color: PixelTheme.neonGreen,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${player.currentHp}/${player.maxHp}HP',
+                      style: PixelTheme.pixelStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: hpColor,
+                      ),
+                    ),
+                    if (player.psychoActive) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                        color: PixelTheme.alertRed,
+                        child: Text(
+                          'PSY',
+                          style: PixelTheme.pixelStyle(
+                            fontSize: 7,
+                            fontWeight: FontWeight.bold,
+                            color: PixelTheme.roomVoid,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
+              const SizedBox(width: 6),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'CAPS: ${player.gold}',
+                    'C:${player.gold}',
                     style: PixelTheme.pixelStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       color: PixelTheme.chestGold,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 6),
                   Text(
-                    'KEYS: ${player.keys}',
+                    'K:${player.keys}',
                     style: PixelTheme.pixelStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       color: PixelTheme.warningAmber,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 6),
                   Text(
                     'F${floorIndex + 1}:R${roomIndex + 1}',
                     style: PixelTheme.pixelStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       color: PixelTheme.textMuted,
                       fontWeight: FontWeight.bold,
                     ),
@@ -111,7 +119,7 @@ class PixelHud extends StatelessWidget {
                   color: PixelTheme.roomUnrevealed,
                   child: Text(
                     'WPN: ${player.equippedWeapon.name.toUpperCase()} (${player.equippedWeapon.minStat}-${player.equippedWeapon.maxStat})',
-                    style: PixelTheme.pixelStyle(fontSize: 8, color: PixelTheme.textLight),
+                    style: PixelTheme.pixelStyle(fontSize: 10, color: PixelTheme.textLight),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -123,7 +131,7 @@ class PixelHud extends StatelessWidget {
                   color: PixelTheme.roomUnrevealed,
                   child: Text(
                     'ARM: ${player.equippedArmor.name.toUpperCase()} (${player.equippedArmor.minStat}-${player.equippedArmor.maxStat} DR)',
-                    style: PixelTheme.pixelStyle(fontSize: 8, color: PixelTheme.textLight),
+                    style: PixelTheme.pixelStyle(fontSize: 10, color: PixelTheme.textLight),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
