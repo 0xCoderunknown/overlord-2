@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/pixel_theme.dart';
+import '../../core/viewport_config.dart';
 import '../../data/game_database.dart';
 import '../../domain/models.dart';
 import '../../engine/building_generator.dart';
@@ -126,9 +127,38 @@ class _ExpeditionScreenState extends State<ExpeditionScreen>
     final visualRow = (floors.length - 1) - f;
     final targetY = 16.0 + visualRow * 198.0 + 99.0;
 
-    final scale = _transformController.value.getMaxScaleOnAxis().clamp(0.6, 2.0);
-    final tx = _viewportSize.width / 2 - targetX * scale;
-    final ty = _viewportSize.height / 2 - targetY * scale;
+    double buildingWidth = 32.0 + 52.0;
+    for (final rm in rooms) {
+      buildingWidth += rm.isElevator ? 108.0 : 298.0;
+    }
+    final buildingHeight = 32.0 + floors.length * 198.0;
+
+    final scale = !animate
+        ? ViewportConfig.initialExpeditionScale(
+            _viewportSize,
+            buildingWidth: buildingWidth,
+            buildingHeight: buildingHeight,
+          )
+        : _transformController.value.getMaxScaleOnAxis().clamp(
+              ViewportConfig.minExpeditionScale,
+              ViewportConfig.maxExpeditionScale,
+            );
+
+    final fitsHorizontally =
+        buildingWidth * scale <= _viewportSize.width + 0.5;
+    final fitsVertically =
+        buildingHeight * scale <= _viewportSize.height + 0.5;
+
+    final tx = fitsHorizontally
+        ? (_viewportSize.width - buildingWidth * scale) / 2
+        : _viewportSize.width / 2 - targetX * scale;
+    final double ty;
+    if (fitsVertically) {
+      ty = (_viewportSize.height - buildingHeight * scale) / 2;
+    } else {
+      final minTy = _viewportSize.height - buildingHeight * scale;
+      ty = (_viewportSize.height / 2 - targetY * scale).clamp(minTy, 0.0);
+    }
 
     final targetMatrix = Matrix4.diagonal3Values(scale, scale, 1.0)
       ..setTranslationRaw(tx, ty, 0.0);
@@ -333,8 +363,8 @@ class _ExpeditionScreenState extends State<ExpeditionScreen>
           transformationController: _transformController,
           constrained: false,
           boundaryMargin: const EdgeInsets.all(220),
-          minScale: 0.6,
-          maxScale: 2.0,
+          minScale: ViewportConfig.minExpeditionScale,
+          maxScale: ViewportConfig.maxExpeditionScale,
           child: Container(
         color: PixelTheme.roomVoid,
         padding: const EdgeInsets.all(16),

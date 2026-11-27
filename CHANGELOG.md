@@ -11,8 +11,9 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
 ### 🧭 Landscape Mode, CRT Terminal & Quest Board
 - **Fallout-Style CRT Overlay (`CrtOverlay`, `main.dart`):**
   - Added a global non-interactive CRT scanline, dark vignette, and subtle `#00E676` phosphor rim overlay across the entire game.
-- **Landscape Orientation & Command Deck (`main.dart`, `OverseerScreen`, `MissionScreen`):**
-  - Flipped the app to Landscape (`860×420` Chrome frame, landscape mobile lock, 2-column `OverseerScreen`, 5-column scout/weapon grids, 2-column Quest Board grid, and unified compact `38px` `BunkerAppBar`).
+- **Landscape Orientation & Full-Width Desktop Scaling (`ViewportConfig`, `main.dart`, `ExpeditionScreen`, `OverseerScreen`, `MissionScreen`):**
+  - Flipped the app to Landscape (mobile landscape lock, fullscreen landscape on wide desktop/Chrome with `860×420` fallback for narrow windows, 2-column `OverseerScreen`, 5-column scout/weapon grids, 2-column Quest Board grid, and unified compact `38px` `BunkerAppBar`).
+  - Scaled `ExpeditionScreen` on wide desktop displays (HD, FHD, QHD) to fill **100% of screen width** edge-to-edge while keeping vertical floor-follow camera panning smooth.
 - **Quest Board & Haunted Home (`MissionScreen`, `BuildingGenerator`):**
   - Replaced inline home mission cards with a full-screen **Quest Board** featuring location loot-focus tags and the new **Haunted Home** (`3 Floors`, haunted lore, **Burial Cloth** drops).
 
