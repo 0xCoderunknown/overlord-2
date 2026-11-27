@@ -6,6 +6,14 @@ import '../domain/models.dart';
 import '../domain/vault_models.dart';
 
 class BunkerManager extends ChangeNotifier {
+  static const int maxMedbayBeds = 3;
+  static const List<String> _cookingMaterialIds = [
+    'med_syringe',
+    'med_herb',
+    'chem_expired',
+  ];
+
+  final Random _rng;
   int caps = 500;
   List<Item> globalStash = [];
   VaultFacility medbay = VaultFacility(id: 'fac_medbay');
@@ -19,8 +27,9 @@ class BunkerManager extends ChangeNotifier {
   int bossesKilled = 0;
   final Set<String> unlockedIds = {};
   String selectedStarterId = 'starter_vance';
+  final Map<String, CharacterStats> characterStats = {};
 
-  BunkerManager() {
+  BunkerManager({Random? random}) : _rng = random ?? Random() {
     _initStarterBunker();
   }
 
@@ -46,6 +55,98 @@ class BunkerManager extends ChangeNotifier {
     // Starting medkit
     final medkitData = ItemDatabase.consumables.firstWhere((c) => c['id'] == 'c_medkit');
     globalStash.add(Item.fromDatabase(medkitData, quantity: 2));
+
+    for (final starter in GameDatabase.starters) {
+      characterStats[starter.id] = CharacterStats();
+    }
+  }
+
+  /// Returns persistent runs/level/kills/recovery stats for a specific scout starter.
+  CharacterStats statsFor(String starterId) =>
+      characterStats.putIfAbsent(starterId, () => CharacterStats());
+
+  List<String> get medbayOccupantIds => characterStats.entries
+      .where((e) => e.value.occupiesMedbayBed)
+      .map((e) => e.key)
+      .toList();
+
+  int get occupiedMedbayBeds => medbayOccupantIds.length;
+
+  bool get hasFreeMedbayBed => occupiedMedbayBeds < maxMedbayBeds;
+
+  int get totalCookingMaterialsCount => _cookingMaterialIds.fold(
+    0,
+    (sum, id) => sum + getStashItemCount(id),
+  );
+
+  bool treatScoutInMedbay(String starterId) {
+    final stats = statsFor(starterId);
+    if (stats.condition != ScoutCondition.injured &&
+        stats.condition != ScoutCondition.sick) {
+      return false;
+    }
+    if (getStashItemCount('c_medkit') <= 0) return false;
+    _consumeStashItem('c_medkit', 1);
+    stats.condition = ScoutCondition.healthy;
+    stats.recoveryRunsLeft = 0;
+    notifyListeners();
+    return true;
+  }
+
+  /// Cooks 1 wasteland material into a mystery injection: Heal (60%), Poison (25%), or Fatal (15%).
+  MysteryShotOutcome? cookMysteryInjection(String starterId) {
+    final stats = statsFor(starterId);
+    if (stats.condition != ScoutCondition.injured &&
+        stats.condition != ScoutCondition.sick) {
+      return null;
+    }
+    String? matId;
+    for (final id in _cookingMaterialIds) {
+      if (getStashItemCount(id) > 0) {
+        matId = id;
+        break;
+      }
+    }
+    if (matId == null) return null;
+    _consumeStashItem(matId, 1);
+
+    final roll = _rng.nextInt(100);
+    final MysteryShotOutcome outcome;
+    if (roll < 60) {
+      outcome = MysteryShotOutcome.heal;
+      stats.condition = ScoutCondition.healthy;
+      stats.recoveryRunsLeft = 0;
+      lastDebrief = 'MEDBAY SHOT WORKED! SCOUT CLEARED FOR DUTY.';
+    } else if (roll < 85) {
+      outcome = MysteryShotOutcome.poison;
+      stats.condition = ScoutCondition.sick;
+      stats.recoveryRunsLeft += 2;
+      lastDebrief = 'BOTCHED MIX! SCOUT POISONED (+2 RECOVERY RUNS).';
+    } else {
+      outcome = MysteryShotOutcome.fatal;
+      stats.condition = ScoutCondition.dead;
+      stats.recoveryRunsLeft = 0;
+      stats.isBuried = false;
+      lastDebrief = 'FATAL OVERDOSE IN MEDBAY. BURIAL CLOTH REQUIRED.';
+    }
+
+    _ensureAtLeastOneAvailableScout();
+    notifyListeners();
+    return outcome;
+  }
+
+  /// Wraps a fallen scout in Burial Cloth to free their Medbay bed.
+  bool buryScoutWithCloth(String starterId) {
+    final stats = statsFor(starterId);
+    if (stats.condition != ScoutCondition.dead || stats.isBuried) {
+      return false;
+    }
+    if (getStashItemCount(GameDatabase.burialCloth.id) <= 0) return false;
+    _consumeStashItem(GameDatabase.burialCloth.id, 1);
+    stats.isBuried = true;
+    lastDebrief = 'FALLEN SCOUT WRAPPED & DISPOSED. MEDBAY BED CLEARED.';
+    notifyListeners();
+    return true;
   }
 
   void addItemToStash(Item item) {
@@ -169,7 +270,9 @@ class BunkerManager extends ChangeNotifier {
       (s) => s.id == starterId,
       orElse: () => GameDatabase.starters.first,
     );
-    if (!isStarterUnlocked(starter)) return;
+    if (!isStarterUnlocked(starter) || !statsFor(starter.id).isAvailable) {
+      return;
+    }
     selectedStarterId = starter.id;
     notifyListeners();
   }
@@ -191,9 +294,12 @@ class BunkerManager extends ChangeNotifier {
         getChallengeProgress(challenge) >= challenge.targetCount;
   }
 
-  /// Deploys the selected Megabonk starter with their signature low-tier gear + Bunker Medkits.
+  bool get hasAnyAvailableScout => GameDatabase.starters.any(
+    (s) => isStarterUnlocked(s) && statsFor(s.id).isAvailable,
+  );
+
+  /// Deploys the selected starter (or an expendable Vault Intern if all scouts are down/dead).
   ScoutCharacter deployExpeditionScout() {
-    final starter = selectedStarter;
     final availableMeds = getStashItemCount('c_medkit');
     final deployMeds = min(3, availableMeds);
 
@@ -201,29 +307,66 @@ class BunkerManager extends ChangeNotifier {
       _consumeStashItem('c_medkit', deployMeds);
     }
 
+    if (!hasAnyAvailableScout) {
+      return ScoutCharacter(
+        name: 'Vault Intern',
+        maxHp: 70,
+        medkits: deployMeds,
+      );
+    }
+
+    final starter = selectedStarter;
     return ScoutCharacter(
       name: starter.name,
       maxHp: starter.maxHp,
-      medkits: max(1, deployMeds),
+      medkits: deployMeds,
       starterWeapon: starter.weapon,
       starterArmor: starter.armor,
     );
   }
 
-  /// Records lifetime kills/unlocks, banks Caps, and stores materials/consumables (no OP weapon carry-over).
+  /// Records lifetime & per-character kills/runs/level, unlocks, and banks Caps/supplies.
   List<ChallengeDef> completeExpedition({
     required int goldEarned,
     required List<EquipmentItem> lootedItems,
     required int unusedMedkits,
     required bool survived,
+    bool caughtSickness = false,
+    String? starterId,
     int kills = 0,
     int ratKills = 0,
     int bossKills = 0,
   }) {
+    final activeId = starterId ?? selectedStarterId;
     expeditionCount++;
     totalKills += kills;
     ratsKilled += ratKills;
     bossesKilled += bossKills;
+    statsFor(activeId).recordRun(kills: kills);
+
+    // Tick down recovery for other resting scouts
+    for (final entry in characterStats.entries) {
+      if (entry.key == activeId) continue;
+      final s = entry.value;
+      if (s.condition != ScoutCondition.dead && s.recoveryRunsLeft > 0) {
+        s.recoveryRunsLeft--;
+        if (s.recoveryRunsLeft == 0) {
+          s.condition = ScoutCondition.healthy;
+        }
+      }
+    }
+
+    // Apply post-run trauma or ration sickness if a Medbay bed is open
+    final activeStats = statsFor(activeId);
+    if (!survived && hasFreeMedbayBed) {
+      activeStats.condition = ScoutCondition.injured;
+      activeStats.recoveryRunsLeft = 2;
+    } else if (survived && caughtSickness && hasFreeMedbayBed) {
+      activeStats.condition = ScoutCondition.sick;
+      activeStats.recoveryRunsLeft = 1;
+    }
+
+    _ensureAtLeastOneAvailableScout();
 
     final newlyUnlocked = <ChallengeDef>[];
     for (final c in GameDatabase.challenges) {
@@ -260,5 +403,35 @@ class BunkerManager extends ChangeNotifier {
     }
     notifyListeners();
     return newlyUnlocked;
+  }
+
+  void _ensureAtLeastOneAvailableScout() {
+    final unlocked = GameDatabase.starters.where(isStarterUnlocked).toList();
+    if (unlocked.isEmpty) return;
+
+    final anyAvailable = unlocked.any((s) => statsFor(s.id).isAvailable);
+    if (!anyAvailable) {
+      // Anti-softlock: clear the recovering non-dead scout closest to recovery
+      final recoverable = unlocked
+          .where((s) => statsFor(s.id).condition != ScoutCondition.dead)
+          .toList()
+        ..sort(
+          (a, b) => statsFor(a.id)
+              .recoveryRunsLeft
+              .compareTo(statsFor(b.id).recoveryRunsLeft),
+        );
+      if (recoverable.isNotEmpty) {
+        final s = statsFor(recoverable.first.id);
+        s.condition = ScoutCondition.healthy;
+        s.recoveryRunsLeft = 0;
+      }
+    }
+
+    if (!statsFor(selectedStarterId).isAvailable) {
+      final fallback = unlocked.where((s) => statsFor(s.id).isAvailable);
+      if (fallback.isNotEmpty) {
+        selectedStarterId = fallback.first.id;
+      }
+    }
   }
 }

@@ -98,6 +98,7 @@ class ExpeditionContract {
   final int roomsPerFloor;
   final int bountyMultiplier;
   final int hazardLevel;
+  final String lootFocus;
 
   const ExpeditionContract({
     required this.id,
@@ -107,6 +108,7 @@ class ExpeditionContract {
     required this.roomsPerFloor,
     this.bountyMultiplier = 1,
     this.hazardLevel = 1,
+    this.lootFocus = '',
   });
 }
 
@@ -190,6 +192,7 @@ class ScoutCharacter {
   int keys;
   int stealthboys;
   bool psychoActive;
+  bool caughtSickness;
 
   EquipmentItem equippedWeapon;
   EquipmentItem equippedArmor;
@@ -203,6 +206,7 @@ class ScoutCharacter {
     this.keys = 1,
     this.stealthboys = 0,
     this.psychoActive = false,
+    this.caughtSickness = false,
     EquipmentItem? starterWeapon,
     EquipmentItem? starterArmor,
     List<EquipmentItem>? backpack,
@@ -315,5 +319,51 @@ class Building {
     final floor = floors[floorIndex];
     if (roomIndex < 0 || roomIndex >= floor.rooms.length) return null;
     return floor.rooms[roomIndex];
+  }
+}
+
+enum ScoutCondition {
+  healthy,
+  injured,
+  sick,
+  dead,
+}
+
+enum MysteryShotOutcome {
+  heal,
+  poison,
+  fatal,
+}
+
+/// Per-character expedition progression & Medbay recovery state.
+class CharacterStats {
+  int runs;
+  int kills;
+  int level;
+  ScoutCondition condition;
+  int recoveryRunsLeft;
+  bool isBuried;
+
+  CharacterStats({
+    this.runs = 0,
+    this.kills = 0,
+    this.level = 1,
+    this.condition = ScoutCondition.healthy,
+    this.recoveryRunsLeft = 0,
+    this.isBuried = false,
+  });
+
+  bool get isAvailable =>
+      condition == ScoutCondition.healthy && recoveryRunsLeft == 0;
+
+  bool get occupiesMedbayBed =>
+      condition == ScoutCondition.injured ||
+      condition == ScoutCondition.sick ||
+      (condition == ScoutCondition.dead && !isBuried);
+
+  void recordRun({int kills = 0}) {
+    runs++;
+    this.kills += kills;
+    level = 1 + (this.kills ~/ 5);
   }
 }

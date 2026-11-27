@@ -6,6 +6,24 @@ Dates strictly use the Indian numerical date format (`DD-MM-YYYY`).
 
 ---
 
+## [Unreleased]
+
+### 🧭 Landscape Mode, CRT Terminal & Quest Board
+- **Fallout-Style CRT Overlay (`CrtOverlay`, `main.dart`):**
+  - Added a global non-interactive CRT scanline, dark vignette, and subtle `#00E676` phosphor rim overlay across the entire game.
+- **Landscape Orientation & Command Deck (`main.dart`, `OverseerScreen`, `MissionScreen`):**
+  - Flipped the app to Landscape (`860×420` Chrome frame, landscape mobile lock, 2-column `OverseerScreen`, 5-column scout/weapon grids, 2-column Quest Board grid, and unified compact `38px` `BunkerAppBar`).
+- **Quest Board & Haunted Home (`MissionScreen`, `BuildingGenerator`):**
+  - Replaced inline home mission cards with a full-screen **Quest Board** featuring location loot-focus tags and the new **Haunted Home** (`3 Floors`, haunted lore, **Burial Cloth** drops).
+
+### 🩺 Per-Character Stats, Scarce Medkits & 3-Bed Medbay
+- **Per-Character Progression (`CharacterStats`):**
+  - Tracked **Level**, **Runs**, and **Kills** separately per scout across `CharactersScreen` and `MissionScreen`.
+- **Scarce Medkits & 3-Bed Medbay Roulette (`BunkerManager`, `MedbayBedsPanel`, `FacilityScreen`):**
+  - Removed the free guaranteed Medkit on deployment (`0` when dry), opened the 3-bed Medbay from Day 1 (renaming the 10K Caps lock to `MEDKIT SYNTHESIZER [OFFLINE]`), added post-run `INJURED` (`2R`) and ration-poisoning `SICK` (`1R`) states, mystery scrap-cooking shots (`60%` Heal / `25%` Poison `+2R` / `15%` Fatal Overdose), `Burial Cloth` corpse disposal, and **Vault Intern** anti-softlock deployment.
+
+---
+
 ## [0.0.6] - 27-11-2026
 
 ### 🏛️ Vault Command Center, Multi-Scout Roster & Challenges

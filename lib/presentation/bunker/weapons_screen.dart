@@ -6,6 +6,7 @@ import '../../domain/models.dart';
 import '../../domain/vault_models.dart';
 import '../../engine/bunker_manager.dart';
 import '../widgets/terminal/terminal_container.dart';
+import 'widgets/overseer_widgets.dart';
 
 class WeaponsScreen extends StatelessWidget {
   final BunkerManager bunkerManager;
@@ -142,35 +143,22 @@ class WeaponsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
-      appBar: AppBar(
-        backgroundColor: AppTheme.bgDark,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.green),
-        title: Text(
-          'WEAPONS COMPENDIUM',
-          style: AppTheme.retroText(
-            color: PixelTheme.chestGold,
-            letterSpacing: 2,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(
-            color: AppTheme.green.withValues(alpha: 0.4),
-            height: 1.0,
-          ),
-        ),
+      appBar: const BunkerAppBar(
+        title: 'WEAPONS COMPENDIUM',
+        titleColor: PixelTheme.chestGold,
       ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(14),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 0.82,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-        ),
+      body: SafeArea(
+        left: false,
+        right: false,
+        child: GridView.builder(
+          padding: const EdgeInsets.all(14),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: MediaQuery.sizeOf(context).width >= 600 ? 5 : 3,
+            childAspectRatio:
+                MediaQuery.sizeOf(context).width >= 600 ? 0.95 : 0.82,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+          ),
         itemCount: entries.length,
         itemBuilder: (context, index) {
           final entry = entries[index];
@@ -239,6 +227,7 @@ class WeaponsScreen extends StatelessWidget {
             ),
           );
         },
+      ),
       ),
     );
   }

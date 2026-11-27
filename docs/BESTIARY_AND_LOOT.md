@@ -82,8 +82,9 @@ $$\text{Net Damage Taken} = \max(0, \text{Enemy Roll} - \text{Armor DR Roll})$$
 * **Dirty Water:** $+8\text{ HP}$ ($35\%$ sickness risk).
 * **Spoiled Canned Meat:** $+15\text{ HP}$ ($40\%$ food poisoning risk).
 
-### Medbay Synthesis Materials
-* **Used Syringe**, **Irradiated Herb**, **Expired Chemicals** — scavenged from Medical Cabinets and banked for Medbay Medkit crafting.
+### Medbay Synthesis & Disposal Materials
+* **Used Syringe**, **Irradiated Herb**, **Expired Chemicals** — scavenged from Medical Cabinets for Medbay Medkit crafting or risky mystery-shot cooking.
+* **Burial Cloth** — looted in **Haunted Home**; required by Vault Sanitation Regs to wrap & clear fallen scouts from Medbay beds.
 
 ---
 

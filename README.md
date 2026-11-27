@@ -51,8 +51,8 @@ No split minimaps or detached battle arenas. Everything happens right inside the
 * **Emergency Medkits:** Trauma Medkits stay locked until your scout drops to **25% HP or lower**—pop one at the brink of death to swing a losing duel.
 
 ### 🏛️ Vault Bunker 42 (Between Runs)
-* **Command Deck & Direct Deployment:** View the **Characters** roster, **Weapons** codex, and **Challenges** milestones, then tap any of the 3 mission tiers (`ABANDONED CLINIC`, `INDUSTRIAL DEPOT`, `BLACK-SITE BUNKER`) to select your scout and deploy.
-* **Medbay Synthesis:** Unlock the Medbay for `10,000` Caps to brew, overclock, and claim fresh Trauma Medkits from scavenged medical materials.
+* **Quest Board & Roster:** View **Characters** (per-scout Level, Runs, Kills, and Condition), **Weapons**, and **Challenges**, then open **`>> QUEST BOARD <<`** to pick a location (`ABANDONED CLINIC`, `INDUSTRIAL DEPOT`, `HAUNTED HOME`, `BLACK-SITE BUNKER`) and deploy.
+* **3-Bed Medbay, Scrap Cooking & Permadeath:** Medkits are scarce (`0` if you're out). Flatlining (`INJURED`) or ration poisoning (`SICK`) benches scouts across **3 Medbay beds**—rotate other scouts to heal, spend a rare Medkit, or cook wasteland scrap for a risky mystery shot (`Heal`, `Poison`, or `Fatal Overdose`, requiring **Burial Cloth** from *Haunted Home* to clear the bed).
 
 ---
 

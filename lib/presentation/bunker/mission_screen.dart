@@ -6,6 +6,7 @@ import '../../domain/models.dart';
 import '../../engine/bunker_manager.dart';
 import '../screens/expedition_screen.dart';
 import '../widgets/terminal/terminal_button.dart';
+import 'widgets/overseer_widgets.dart';
 
 class MissionScreen extends StatefulWidget {
   final BunkerManager bunkerManager;
@@ -42,88 +43,126 @@ class _MissionScreenState extends State<MissionScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
-      appBar: AppBar(
-        backgroundColor: AppTheme.bgDark,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.green),
+      appBar: BunkerAppBar(
+        title: isStep2 ? 'SELECT SCOUT TO DEPLOY' : 'QUEST BOARD',
         leading: isStep2 && widget.initialContract == null
             ? IconButton(
                 icon: const Icon(Icons.arrow_back, color: AppTheme.green),
                 onPressed: () => setState(() => _selectedContract = null),
               )
             : null,
-        title: Text(
-          isStep2 ? 'SELECT SCOUT TO DEPLOY' : 'SELECT MISSION',
-          style: AppTheme.retroText(
-            color: PixelTheme.neonGreen,
-            fontSize: 15,
-            letterSpacing: 1.5,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(
-            color: AppTheme.green.withValues(alpha: 0.4),
-            height: 1.0,
-          ),
-        ),
       ),
       body: SafeArea(
+        left: false,
+        right: false,
         child: isStep2 ? _buildCharacterStep() : _buildContractStep(),
       ),
     );
   }
 
   Widget _buildContractStep() {
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: GameDatabase.contracts.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (context, idx) {
-        final contract = GameDatabase.contracts[idx];
-        final color = _hazardColor(contract.hazardLevel);
+    final isLandscape = MediaQuery.sizeOf(context).width >= 600;
+    if (isLandscape) {
+      return GridView.builder(
+        padding: const EdgeInsets.all(12),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 2.35,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+        ),
+        itemCount: GameDatabase.contracts.length,
+        itemBuilder: (context, idx) =>
+            _buildContractCard(GameDatabase.contracts[idx]),
+      );
+    }
 
-        return InkWell(
-          onTap: () => setState(() => _selectedContract = contract),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.bgBlack,
-              border: Border.all(color: color, width: 1.5),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        contract.title,
-                        style: AppTheme.retroText(
-                          color: color,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        contract.subtitle,
-                        style: AppTheme.retroText(
-                          color: AppTheme.grey,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
+    return ListView.separated(
+      padding: const EdgeInsets.all(12),
+      itemCount: GameDatabase.contracts.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, idx) =>
+          _buildContractCard(GameDatabase.contracts[idx]),
+    );
+  }
+
+  Widget _buildContractCard(ExpeditionContract contract) {
+    final color = _hazardColor(contract.hazardLevel);
+
+    return InkWell(
+      onTap: () => setState(() => _selectedContract = contract),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.bgBlack,
+          border: Border.all(color: color, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 5,
+              ),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.14),
+                border: Border.all(color: color),
+              ),
+              child: Text(
+                'T${contract.hazardLevel}',
+                style: AppTheme.retroText(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
-                Icon(Icons.chevron_right, color: color, size: 24),
-              ],
+              ),
             ),
-          ),
-        );
-      },
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    contract.title,
+                    style: AppTheme.retroText(
+                      color: color,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    contract.subtitle.toUpperCase(),
+                    style: AppTheme.retroText(
+                      color: AppTheme.grey,
+                      fontSize: 10,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (contract.lootFocus.isNotEmpty) ...[
+                    const SizedBox(height: 5),
+                    Text(
+                      'LOOT: ${contract.lootFocus}',
+                      style: AppTheme.retroText(
+                        color: PixelTheme.elevatorCyan,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: color, size: 22),
+          ],
+        ),
+      ),
     );
   }
 
@@ -133,12 +172,12 @@ class _MissionScreenState extends State<MissionScreen> {
     final selected = bunker.selectedStarter;
 
     return Padding(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             color: AppTheme.bgBlack,
             child: Text(
               'TARGET: ${contract.title} (${contract.floorCount} FLOORS)',
@@ -149,12 +188,14 @@ class _MissionScreenState extends State<MissionScreen> {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Expanded(
             child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: 0.80,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount:
+                    MediaQuery.sizeOf(context).width >= 600 ? 5 : 3,
+                childAspectRatio:
+                    MediaQuery.sizeOf(context).width >= 600 ? 0.95 : 0.80,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
               ),
@@ -162,13 +203,15 @@ class _MissionScreenState extends State<MissionScreen> {
               itemBuilder: (context, idx) {
                 final starter = GameDatabase.starters[idx];
                 final unlocked = bunker.isStarterUnlocked(starter);
+                final stats = bunker.statsFor(starter.id);
+                final available = unlocked && stats.isAvailable;
                 final isSelected = bunker.selectedStarterId == starter.id;
-                final borderColor = !unlocked
+                final borderColor = !available
                     ? PixelTheme.borderPixel
                     : (isSelected ? PixelTheme.neonGreen : PixelTheme.textMuted);
 
                 return InkWell(
-                  onTap: unlocked
+                  onTap: available
                       ? () => setState(() => bunker.selectStarter(starter.id))
                       : null,
                   child: Container(
@@ -187,7 +230,7 @@ class _MissionScreenState extends State<MissionScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: ColorFiltered(
-                              colorFilter: unlocked
+                              colorFilter: available
                                   ? const ColorFilter.mode(
                                       Colors.transparent,
                                       BlendMode.dst,
@@ -212,12 +255,18 @@ class _MissionScreenState extends State<MissionScreen> {
                           ),
                           color: PixelTheme.roomUnrevealed,
                           child: Text(
-                            unlocked ? starter.name : '${starter.name} 🔒',
+                            !unlocked
+                                ? '${starter.name} 🔒'
+                                : (!stats.isAvailable
+                                      ? '${stats.condition.name.toUpperCase()} (${stats.recoveryRunsLeft}R)'
+                                      : starter.name),
                             style: AppTheme.retroText(
-                              fontSize: 10,
+                              fontSize: 9.5,
                               color: isSelected
                                   ? PixelTheme.neonGreen
-                                  : (unlocked ? AppTheme.white : AppTheme.grey),
+                                  : (available
+                                        ? AppTheme.white
+                                        : PixelTheme.warningAmber),
                             ),
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
@@ -234,22 +283,43 @@ class _MissionScreenState extends State<MissionScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             color: AppTheme.bgBlack,
-            child: Text(
-              '${selected.name.toUpperCase()} (${selected.maxHp} HP) • ${selected.weapon.name} & ${selected.armor.name}',
-              style: AppTheme.retroText(
-                color: PixelTheme.textLight,
-                fontSize: 10,
-              ),
-              textAlign: TextAlign.center,
+            child: Column(
+              children: [
+                Text(
+                  bunker.hasAnyAvailableScout
+                      ? '${selected.name.toUpperCase()} (${selected.maxHp} HP) • ${selected.weapon.name} & ${selected.armor.name}'
+                      : 'ALL SCOUTS DEAD/RECOVERING — VAULT INTERN (70 HP) READY',
+                  style: AppTheme.retroText(
+                    color: bunker.hasAnyAvailableScout
+                        ? PixelTheme.textLight
+                        : PixelTheme.warningAmber,
+                    fontSize: 10,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                if (bunker.hasAnyAvailableScout) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'LVL ${bunker.statsFor(selected.id).level} • ${bunker.statsFor(selected.id).runs} RUNS • ${bunker.statsFor(selected.id).kills} KILLS',
+                    style: AppTheme.retroText(
+                      color: PixelTheme.elevatorCyan,
+                      fontSize: 10,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           TerminalButton(
-            text: '>> DEPLOY ${selected.name.toUpperCase()} <<',
+            text: bunker.hasAnyAvailableScout
+                ? '>> DEPLOY ${selected.name.toUpperCase()} <<'
+                : '>> DEPLOY VAULT INTERN <<',
             borderColor: PixelTheme.neonGreen,
             textColor: PixelTheme.roomVoid,
             backgroundColor: PixelTheme.neonGreen,
-            padding: 14,
+            padding: 12,
             onPressed: () {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(

@@ -5,6 +5,8 @@ import '../../domain/vault_models.dart';
 import '../../engine/bunker_manager.dart';
 import '../widgets/terminal/terminal_button.dart';
 import '../widgets/terminal/terminal_container.dart';
+import 'widgets/medbay_beds_panel.dart';
+import 'widgets/overseer_widgets.dart';
 
 class FacilityScreen extends StatefulWidget {
   final BunkerManager bunkerManager;
@@ -43,26 +45,11 @@ class _FacilityScreenState extends State<FacilityScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
-      appBar: AppBar(
-        title: Text(
-          'VAULT FACILITIES',
-          style: AppTheme.retroText(
-            color: AppTheme.green,
-            letterSpacing: 2,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: AppTheme.bgDark,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.green),
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: AppTheme.green.withValues(alpha: 0.4), height: 1.0),
-        ),
-      ),
+      appBar: const BunkerAppBar(title: 'MEDICAL BAY'),
       body: SafeArea(
-        child: Padding(
+        left: false,
+        right: false,
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -76,7 +63,9 @@ class _FacilityScreenState extends State<FacilityScreen> {
                   letterSpacing: 1,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              MedbayBedsPanel(bunker: bunker),
+              const SizedBox(height: 14),
               TerminalContainer(
                 borderColor: medbay.isUnlocked ? AppTheme.green : AppTheme.alertRed,
                 padding: const EdgeInsets.all(14),
@@ -87,17 +76,17 @@ class _FacilityScreenState extends State<FacilityScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'MEDICAL BAY',
+                          'MEDKIT SYNTHESIZER',
                           style: AppTheme.retroText(
                             color: medbay.isUnlocked
                                 ? AppTheme.terminalGreen
                                 : AppTheme.alertRed,
-                            fontSize: 18,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          medbay.isUnlocked ? 'LVL 1 [ONLINE]' : '[OFFLINE]',
+                          medbay.isUnlocked ? '[ONLINE]' : '[OFFLINE]',
                           style: AppTheme.retroText(
                             color: medbay.isUnlocked
                                 ? AppTheme.terminalGreen
@@ -130,9 +119,9 @@ class _FacilityScreenState extends State<FacilityScreen> {
         const Icon(Icons.lock_outline, color: AppTheme.alertRed, size: 48),
         const SizedBox(height: 12),
         Text(
-          'Facility destroyed during the blast. Requires structural restoration and power grid routing to synthesize Wasteland Medkits.',
+          'Pre-war Medkit Synthesizer is offline. Restore power to brew clean Trauma Medkits instead of gambling on scrap shots.',
           textAlign: TextAlign.center,
-          style: AppTheme.retroText(color: AppTheme.grey, fontSize: 13),
+          style: AppTheme.retroText(color: AppTheme.grey, fontSize: 12),
         ),
         const SizedBox(height: 20),
         TerminalButton(

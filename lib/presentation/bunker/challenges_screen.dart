@@ -4,6 +4,7 @@ import '../../core/pixel_theme.dart';
 import '../../data/game_database.dart';
 import '../../domain/models.dart';
 import '../../engine/bunker_manager.dart';
+import 'widgets/overseer_widgets.dart';
 
 class ChallengesScreen extends StatelessWidget {
   final BunkerManager bunkerManager;
@@ -18,29 +19,10 @@ class ChallengesScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
-      appBar: AppBar(
-        backgroundColor: AppTheme.bgDark,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.green),
-        title: Text(
-          'CHALLENGES',
-          style: PixelTheme.pixelStyle(
-            color: PixelTheme.neonGreen,
-            fontSize: 16,
-            letterSpacing: 1.5,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(
-            color: AppTheme.green.withValues(alpha: 0.4),
-            height: 1.0,
-          ),
-        ),
-      ),
+      appBar: const BunkerAppBar(title: 'CHALLENGES'),
       body: SafeArea(
+        left: false,
+        right: false,
         child: ListView(
           padding: const EdgeInsets.all(14),
           children: [

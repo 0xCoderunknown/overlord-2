@@ -639,6 +639,7 @@ class ExplorationController extends ChangeNotifier {
     if (poisonRisk > 0 && generator.rng.nextInt(100) < poisonRisk) {
       final dmg = 4 + generator.rng.nextInt(4);
       player.currentHp = (player.currentHp - dmg).clamp(1, player.maxHp);
+      player.caughtSickness = true;
       isShakingHero = true;
       heroDamagePopup = '-$dmg';
       lastEventLog = '"Ugh... ${food.name} was a terrible idea. (-$dmg HP)"';

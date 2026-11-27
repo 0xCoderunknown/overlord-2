@@ -5,6 +5,7 @@ import '../../data/game_database.dart';
 import '../../domain/models.dart';
 import '../../engine/bunker_manager.dart';
 import '../widgets/terminal/terminal_container.dart';
+import 'widgets/overseer_widgets.dart';
 
 class CharactersScreen extends StatelessWidget {
   final BunkerManager bunkerManager;
@@ -21,6 +22,7 @@ class CharactersScreen extends StatelessWidget {
     final progress = challenge != null
         ? bunkerManager.getChallengeProgress(challenge)
         : 0;
+    final stats = bunkerManager.statsFor(starter.id);
 
     showDialog(
       context: context,
@@ -102,7 +104,32 @@ class CharactersScreen extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 7,
+                  ),
+                  color: PixelTheme.roomUnrevealed,
+                  child: Text(
+                    stats.isAvailable
+                        ? 'LVL ${stats.level}  •  RUNS ${stats.runs}  •  KILLS ${stats.kills}'
+                        : (stats.condition == ScoutCondition.dead
+                              ? 'LVL ${stats.level}  •  ${stats.isBuried ? 'DEAD (BURIED)' : 'DEAD (IN MEDBAY)'}  •  KILLS ${stats.kills}'
+                              : 'LVL ${stats.level}  •  ${stats.condition.name.toUpperCase()} (${stats.recoveryRunsLeft}R)  •  KILLS ${stats.kills}'),
+                    style: AppTheme.retroText(
+                      color: stats.isAvailable
+                          ? PixelTheme.neonGreen
+                          : (stats.condition == ScoutCondition.dead
+                                ? PixelTheme.alertRed
+                                : PixelTheme.warningAmber),
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.all(10),
                   color: AppTheme.bgBlack,
@@ -161,32 +188,16 @@ class CharactersScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
-      appBar: AppBar(
-        backgroundColor: AppTheme.bgDark,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.green),
-        title: Text(
-          'CHARACTER SELECTION',
-          style: AppTheme.retroText(
-            color: PixelTheme.neonGreen,
-            letterSpacing: 2,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(
-            color: AppTheme.green.withValues(alpha: 0.4),
-            height: 1.0,
-          ),
-        ),
-      ),
-      body: GridView.builder(
+      appBar: const BunkerAppBar(title: 'CHARACTER SELECTION'),
+      body: SafeArea(
+        left: false,
+        right: false,
+        child: GridView.builder(
         padding: const EdgeInsets.all(14),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 0.82,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: MediaQuery.sizeOf(context).width >= 600 ? 5 : 3,
+          childAspectRatio:
+              MediaQuery.sizeOf(context).width >= 600 ? 0.95 : 0.82,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
         ),
@@ -194,6 +205,7 @@ class CharactersScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final starter = GameDatabase.starters[index];
           final unlocked = bunkerManager.isStarterUnlocked(starter);
+          final stats = bunkerManager.statsFor(starter.id);
           final borderColor =
               unlocked ? PixelTheme.textMuted : PixelTheme.borderPixel;
 
@@ -235,10 +247,18 @@ class CharactersScreen extends StatelessWidget {
                     ),
                     color: PixelTheme.roomUnrevealed,
                     child: Text(
-                      unlocked ? starter.name : '${starter.name} 🔒',
+                      !unlocked
+                          ? '${starter.name} 🔒'
+                          : (!stats.isAvailable
+                                ? '${starter.name} • ${stats.condition.name.toUpperCase()}'
+                                : '${starter.name} • L${stats.level}'),
                       style: AppTheme.retroText(
                         fontSize: 10,
-                        color: unlocked ? AppTheme.white : AppTheme.grey,
+                        color: !unlocked
+                            ? AppTheme.grey
+                            : (!stats.isAvailable
+                                  ? PixelTheme.warningAmber
+                                  : AppTheme.white),
                       ),
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
@@ -249,6 +269,7 @@ class CharactersScreen extends StatelessWidget {
             ),
           );
         },
+      ),
       ),
     );
   }

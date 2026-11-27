@@ -43,8 +43,8 @@
 | **Two-Way Combat Banter** | `BanterEngine` + `BanterDatabase` drive sequential round-scaled exchanges (no 3-round cap). Animals (including Featherless Turkey) speak `"....."` with confused/joking scout replies; humans, robots, and bosses trade back-and-forth lines. |
 | **Emergency Heal & Stealthboy** | Medkit healing is strictly locked until Scout HP drops to $\le 25\%$ max vitality. Stealthboys allow bypassing non-boss hostile rooms without combat. |
 | **Direct-to-Backpack Scavenging** | Searching scrap piles adds found gear/materials **straight into `ScoutCharacter.backpack`** (no keep/scrap prompt); empty junk triggers a scavenger quip + transient `EMPTY JUNK` tag. |
-| **Tactical Dock & Bunker Loop** | `ExpeditionBottomBar` provides `BACKPACK`, `MED`, and `EXTRACT`. `OverseerScreen` displays the 3-tier mission contracts directly (launching `MissionScreen` for scout selection) and a 2×2 hub deck (`CharactersScreen`, `WeaponsScreen`, `ChallengesScreen`, `FacilityScreen`). |
-| **Mobile Frame & Auto-Follow Camera** | Web runs on Chrome wrap the app in a `420×860` mobile-proportioned frame; `ExpeditionScreen` smoothly auto-pans the camera to follow the scout as they move between rooms and floors. |
+| **Tactical Dock & Bunker Loop** | `ExpeditionBottomBar` provides `BACKPACK`, `MED`, and `EXTRACT`. `OverseerScreen` uses a 2-column landscape Command Deck opening `MissionScreen` (**Quest Board** $\rightarrow$ scout selection) and a 2×2 hub deck (`CharactersScreen`, `WeaponsScreen`, `ChallengesScreen`, `FacilityScreen`). |
+| **Landscape Frame & Auto-Follow Camera** | Web runs on Chrome wrap the app in an `860×420` landscape frame; `ExpeditionScreen` smoothly auto-pans the camera to follow the scout across rooms and floors. |
 
 ---
 

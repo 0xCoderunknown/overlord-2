@@ -15,6 +15,7 @@ class BuildingGenerator {
     int elevatorColumn = 3,
     int bountyMultiplier = 1,
     Set<String> unlockedIds = const {},
+    bool isHaunted = false,
   }) {
     final floors = <Floor>[];
 
@@ -85,10 +86,14 @@ class BuildingGenerator {
           enemy = _rollEnemyForFloor(f, bountyMultiplier: bountyMultiplier);
         } else if (roll < 70) {
           contentType = ContentType.scrap;
-          scrapPile = generateScrapPile(f, unlockedIds: unlockedIds);
+          scrapPile = generateScrapPile(
+            f,
+            unlockedIds: unlockedIds,
+            isHaunted: isHaunted,
+          );
         } else {
           contentType = ContentType.empty;
-          ambient = _pickIndoorLore(type, rng);
+          ambient = _pickIndoorLore(type, rng, isHaunted: isHaunted);
           final evRoll = rng.nextInt(100);
           if (type == RoomType.clinic && evRoll < 40) {
             eventType = RoomEventType.medCabinet;
@@ -126,8 +131,8 @@ class BuildingGenerator {
     );
   }
 
-  String _pickIndoorLore(RoomType type, Random rng) {
-    final pool = GameDatabase.getIndoorLorePool(type);
+  String _pickIndoorLore(RoomType type, Random rng, {bool isHaunted = false}) {
+    final pool = GameDatabase.getIndoorLorePool(type, isHaunted: isHaunted);
     return '"${pool[rng.nextInt(pool.length)]}"';
   }
 
@@ -170,13 +175,18 @@ class BuildingGenerator {
   ScrapPile generateScrapPile(
     int floorIndex, {
     Set<String> unlockedIds = const {},
+    bool isHaunted = false,
   }) {
-    // 30% chance to find loot in scrap pile
-    final hasLoot = rng.nextInt(100) < 30;
+    // 30% chance to find loot in scrap pile (40% in Haunted Home)
+    final hasLoot = rng.nextInt(100) < (isHaunted ? 40 : 30);
     EquipmentItem? item;
 
     if (hasLoot) {
-      item = _rollScrapItem(floorIndex, unlockedIds: unlockedIds);
+      item = _rollScrapItem(
+        floorIndex,
+        unlockedIds: unlockedIds,
+        isHaunted: isHaunted,
+      );
     }
 
     return ScrapPile(
@@ -188,10 +198,12 @@ class BuildingGenerator {
   EquipmentItem rollSafeLoot(
     int floorIndex, {
     Set<String> unlockedIds = const {},
+    bool isHaunted = false,
   }) {
     return _rollScrapItem(
       min(2, floorIndex + 1),
       unlockedIds: unlockedIds,
+      isHaunted: isHaunted,
     );
   }
 
@@ -203,7 +215,11 @@ class BuildingGenerator {
   EquipmentItem _rollScrapItem(
     int floorIndex, {
     Set<String> unlockedIds = const {},
+    bool isHaunted = false,
   }) {
+    if (isHaunted && rng.nextInt(100) < 35) {
+      return GameDatabase.burialCloth;
+    }
     final roll = rng.nextInt(100);
     final tier = min(3, floorIndex + 1);
 

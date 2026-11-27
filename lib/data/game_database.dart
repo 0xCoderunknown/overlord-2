@@ -316,6 +316,16 @@ class GameDatabase {
     ),
   ];
 
+  static const EquipmentItem burialCloth = EquipmentItem(
+    id: 'mat_burial_cloth',
+    name: 'Burial Cloth',
+    type: ItemType.consumable,
+    consumableEffect: ConsumableEffect.material,
+    scrapValue: 4,
+    description:
+        'Clean linen shroud required by Vault Regs to wrap fallen scouts.',
+  );
+
   static const List<EquipmentItem> foods = [
     EquipmentItem(
       id: 'f_purified_water',
@@ -539,6 +549,7 @@ class GameDatabase {
       roomsPerFloor: 4,
       bountyMultiplier: 1,
       hazardLevel: 1,
+      lootFocus: 'MEDBAY SCRAP & SYRINGES',
     ),
     ExpeditionContract(
       id: 'contract_depot',
@@ -548,6 +559,17 @@ class GameDatabase {
       roomsPerFloor: 4,
       bountyMultiplier: 1,
       hazardLevel: 2,
+      lootFocus: 'WEAPONS, ARMOR & XP',
+    ),
+    ExpeditionContract(
+      id: 'contract_haunted',
+      title: 'HAUNTED HOME',
+      subtitle: '3 Floors • Cursed Threats • Burial Cloth Drops',
+      floorCount: 3,
+      roomsPerFloor: 4,
+      bountyMultiplier: 1,
+      hazardLevel: 2,
+      lootFocus: 'BURIAL CLOTH & CURSED LOOT',
     ),
     ExpeditionContract(
       id: 'contract_blacksite',
@@ -557,6 +579,7 @@ class GameDatabase {
       roomsPerFloor: 4,
       bountyMultiplier: 2,
       hazardLevel: 3,
+      lootFocus: '2X COINS & APEX THREATS',
     ),
   ];
 
@@ -602,7 +625,18 @@ class GameDatabase {
     'Rusted padlock snapped off a long time ago.',
   ];
 
-  static List<String> getIndoorLorePool(RoomType type) {
+  static const List<String> hauntedLore = [
+    'Cold air seeps through wallpaper peeling like dead skin.',
+    'A child\'s rocking chair creaks on its own in the corner.',
+    'Moth-eaten funeral linens hang neatly in the closet.',
+    'Someone wrote "DO NOT BURY THEM HERE" behind the mirror.',
+  ];
+
+  static List<String> getIndoorLorePool(
+    RoomType type, {
+    bool isHaunted = false,
+  }) {
+    if (isHaunted) return hauntedLore;
     return switch (type) {
       RoomType.clinic => clinicLore,
       RoomType.generator => generatorLore,

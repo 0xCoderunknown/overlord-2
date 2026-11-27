@@ -1,8 +1,15 @@
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'core/pixel_theme.dart';
 import 'presentation/bunker/overseer_screen.dart';
+import 'presentation/widgets/terminal/crt_overlay.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
   runApp(const Overlord2App());
 }
 
@@ -23,13 +30,14 @@ class Overlord2App extends StatelessWidget {
         ),
       ),
       builder: (context, child) {
+        final content = CrtOverlay(child: child ?? const SizedBox.shrink());
         return LayoutBuilder(
           builder: (context, constraints) {
-            if (constraints.maxWidth <= 460) {
-              return child ?? const SizedBox.shrink();
+            if (constraints.maxWidth <= 900) {
+              return content;
             }
-            const phoneWidth = 420.0;
-            final phoneHeight = constraints.maxHeight.clamp(0.0, 860.0);
+            const phoneWidth = 860.0;
+            final phoneHeight = constraints.maxHeight.clamp(0.0, 420.0);
             return Container(
               color: const Color(0xFF05060A),
               alignment: Alignment.center,
@@ -44,7 +52,7 @@ class Overlord2App extends StatelessWidget {
                   data: MediaQuery.of(context).copyWith(
                     size: Size(phoneWidth, phoneHeight),
                   ),
-                  child: child ?? const SizedBox.shrink(),
+                  child: content,
                 ),
               ),
             );

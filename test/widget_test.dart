@@ -18,9 +18,15 @@ void main() {
     expect(find.text('CHALLENGES'), findsOneWidget);
     expect(find.text('MEDBAY'), findsOneWidget);
 
-    // Tap Mission directly on OverseerScreen -> Select Scout -> Deploy
-    await tester.ensureVisible(find.text('INDUSTRIAL DEPOT'));
+    // Open Quest Board -> Select Location -> Select Scout -> Deploy
+    await tester.ensureVisible(find.text('>> QUEST BOARD <<'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('>> QUEST BOARD <<'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('QUEST BOARD'), findsOneWidget);
+    expect(find.text('HAUNTED HOME'), findsOneWidget);
+
     await tester.tap(find.text('INDUSTRIAL DEPOT'));
     await tester.pumpAndSettle();
 

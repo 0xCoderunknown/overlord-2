@@ -59,6 +59,7 @@ class _ExpeditionScreenState extends State<ExpeditionScreen>
       elevatorColumn: activeContract.roomsPerFloor - 1,
       bountyMultiplier: activeContract.bountyMultiplier,
       unlockedIds: widget.bunkerManager?.unlockedIds ?? const {},
+      isHaunted: activeContract.id == 'contract_haunted',
     );
     final player = widget.bunkerManager?.deployExpeditionScout() ??
         ScoutCharacter(name: 'Vance');
@@ -83,6 +84,7 @@ class _ExpeditionScreenState extends State<ExpeditionScreen>
       lootedItems: player.backpack,
       unusedMedkits: player.medkits,
       survived: true,
+      caughtSickness: player.caughtSickness,
       kills: _controller.sessionKills,
       ratKills: _controller.sessionRatsKilled,
       bossKills: _controller.sessionBossesKilled,
@@ -428,6 +430,7 @@ class _ExpeditionScreenState extends State<ExpeditionScreen>
             lootedItems: const [],
             unusedMedkits: 0,
             survived: false,
+            caughtSickness: _controller.player.caughtSickness,
             kills: _controller.sessionKills,
             ratKills: _controller.sessionRatsKilled,
             bossKills: _controller.sessionBossesKilled,
